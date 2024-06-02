@@ -13,9 +13,9 @@ export const VideoPlayer = ({navigation, route}) => {
   //  const videoRef = useRef<VideoRef>(null);
   //  const background = require(urlPeli);
   console.log(urlPeli);
-  const onError = error => {
-    Alert.alert('Error', 'No se pudo cargar el video. Verifica la URL.');
-    console.error(error);
+  const onError = ({error}) => {
+    Alert.alert('Error', error.errorString);
+    console.error(error.errorString);
   };
   return (
     <Video
@@ -23,8 +23,8 @@ export const VideoPlayer = ({navigation, route}) => {
       bufferConfig={{
         minBufferMs: 15000,
         maxBufferMs: 50000,
-        bufferForPlaybackMs: 2500,
-        bufferForPlaybackAfterRebufferMs: 5000,
+        bufferForPlaybackMs: 15000,
+        bufferForPlaybackAfterRebufferMs: 15000,
       }}
       source={{uri: urlPeli}}
       // Store reference
@@ -37,6 +37,15 @@ export const VideoPlayer = ({navigation, route}) => {
       controls={true}
       auto
       style={styles.backgroundVideo}
+      onBuffer={(buffer) => {
+        console.log("Buffering: ", buffer);
+      }}
+      onLoad={(data) => {
+        console.log("Loaded: ", data);
+      }}
+      onEnd={() => {
+        console.log("Playback finished");
+      }}
     />
   );
 };

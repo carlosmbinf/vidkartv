@@ -19,10 +19,26 @@ class App extends React.Component {
     // console.log(this.flatListRef.current);
     // this.flatListRef.current?.focus();
     // Orientation.lockToPortrait();
+    console.log('componentDidMount');
+    this.setState = {
+      data: this.props.pelis,
+      isReady: this.props.ready,
+    };
   }
 
   componentWillUnmount() {
+    console.log('componentWillUnmount');
     // Orientation.unlockAllOrientations();
+    this.state = {
+      data: [],
+      isReady: false,
+    };
+  }
+
+  componentDidUpdate(prevProps) {
+    console.log('componentDidUpdate');
+    // console.log('this.props.pelis', this.props.pelis);
+    // console.log('isReady', this.props.ready);
   }
 
   constructor(props) {
@@ -32,11 +48,11 @@ class App extends React.Component {
     super(props);
     this.flatListRef = React.createRef();
     this.state = {
-      data: this.props.pelis,
-      isLoading: this.props.pelis ? true : false,
+      data: [],
+      isReady: false,
     };
 
-    console.log('props', this.state);
+    // console.log('props', this.state);
     // const isDarkMode = useColorScheme() === 'dark';
     // const [data, setData] = ;
     // const [isLoading, setLoading] = useState(true);
@@ -44,23 +60,29 @@ class App extends React.Component {
   }
 
   render() {
-    const {navigation} = this.props;
-    // console.log("navigation" , navigation);
+    const {navigation, ready, pelis, clasificacion} = this.props;
+    console.log("render");
     return (
       <View
         style={{
+          paddingTop: 50,
           flex: 1,
           justifyContent: 'center',
           alignItems: 'center',
-          maxHeight: 300,
+          maxHeight: 190,
         }}>
-        {this.state.isLoading && (
+        <View style={{width: '100%'}}>
+          <Text style={{color: '#e5e5e5'}} minimumFontScale={10}>
+            {clasificacion.toUpperCase()}
+          </Text>
+        </View>
+        {ready ? (
           // <CardPeli item={this.state.data[0]}/>
           <FlatList
             ref={this.flatListRef}
             focusable={true}
             accessible={true}
-            data={this.state.data}
+            data={pelis}
             renderItem={({item}) => (
               <CardPeli item={item} navigation={navigation} />
             )}
@@ -68,27 +90,33 @@ class App extends React.Component {
             scrollEnabled={true}
             keyExtractor={item => item._id} // Asegúrate de tener una key única
           />
+        ) : (
+          <Text>Cargando...</Text>
         )}
       </View>
     );
   }
 }
 
-const HomeServices = withTracker(({navigation}) => {
+const MainPelis = withTracker(({navigation, clasificacion}) => {
   // console.log(navigation);
   let ready = Meteor.subscribe('pelis', {
-    clasificacion: 'Sci-Fi',
+    clasificacion: clasificacion,
   }).ready();
-  let pelis = PelisRegister.find(
-    {clasificacion: 'Sci-Fi'},
-    {fields: {nombrePeli: 1, urlBackground: 1, urlPeli: 1}},
-  ).fetch();
+  let pelis = ready
+    ? PelisRegister.find(
+        {clasificacion: clasificacion},
+        {fields: {nombrePeli: 1, urlBackground: 1, urlPeli: 1}},
+      ).fetch()
+    : null;
 
   // console.log('pelis', pelis);
   return {
     navigation,
     pelis,
+    ready,
+    clasificacion
   };
 })(App);
 
-export default HomeServices;
+export default MainPelis;

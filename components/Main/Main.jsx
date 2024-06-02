@@ -4,11 +4,23 @@ import {View, Text, ScrollView} from 'react-native';
 import {VideoPlayer} from '../video/VideoPlayer';
 import {Button} from 'react-native-paper';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
-import HomeServices from './HomeServices';
+import MainPelis from './MainPelis';
 
 const Stack = createNativeStackNavigator();
 
 const Main = () => {
+  const categorias = [
+    'Sci-Fi',
+    'Action',
+    'Adventure',
+    'Thriller',
+    'Crime',
+    'Mystery',
+    'Horror',
+    'Comedy',
+    'Romance',
+    'Drama',
+  ];
   return (
     <Stack.Navigator initialRouteName="Home">
       <Stack.Screen
@@ -31,7 +43,15 @@ const Main = () => {
           // navigationBarHidden: true,
           headerShown: false,
         }}>
-        {props => <HomeServices {...props} />}
+        {props => (
+          <>
+            <ScrollView style={{backgroundColor:'rgb(20, 20, 20)'}}>
+              {categorias.map((categoria, index) => (
+                <MainPelis {...props} key={index} clasificacion={categoria} />
+              ))}
+            </ScrollView>
+          </>
+        )}
       </Stack.Screen>
       <Stack.Screen
         name="Peli"

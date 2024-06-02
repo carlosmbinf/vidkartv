@@ -1,16 +1,12 @@
 import React, {useEffect} from 'react';
-import {
-  Animated,
-  Image,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-} from 'react-native';
-import {Button, Text} from 'react-native-paper';
+import {Animated, ImageBackground, StyleSheet, TouchableOpacity, View} from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
+import {Button, Text, Image} from 'react-native-paper';
 
 const CardPeli = props => {
   const {nombrePeli, urlBackground, urlPeli} = props.item;
   const {navigation} = props;
+  const [mostrar, setMostrar] = React.useState(false);
   // console.log("navigation" , navigation);
   const [focused, setFocused] = React.useState(false);
   // const [nombrePeli, setNombrePeli] = React.useState();
@@ -49,13 +45,13 @@ const CardPeli = props => {
         });
       }}
       style={{
-        // backgroundColor: focused ? 'black' : 'white',
-        marginRight: 10,
-        marginTop: 10,
-        //ampliar el touchable
-        // width: focused ? '100%' : '80%',
-        // height: focused ? '100%' : '80%',
-        // zoom: focused ? 1.2 : 1,
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 10,
+        paddingTop: 0,
+        paddingBottom: 0,
+        width: 175,
         opacity: focused ? 1 : 0.9,
       }}>
       <Animated.View
@@ -65,14 +61,27 @@ const CardPeli = props => {
             transform: [{scale: scaleValue}],
           },
         ]}>
-        <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-          <Text>{nombrePeli}</Text>
-          <Image
-            source={{uri: urlBackground ? urlBackground : ''}}
-            style={{width: 200, height: 200}}
-          />
-          <Button title="Go to Details">Go to Details</Button>
-        </View>
+        <ImageBackground
+          onLoadEnd={() => {
+            console.log('onLoadEnd', nombrePeli);
+            setMostrar(true);
+          }}
+          source={{uri: urlBackground}}
+          style={{
+            width: 150,
+            height: 100,
+            borderRadius: 10,
+            justifyContent: 'flex-end',
+          }}
+          borderRadius={20}>
+          <View style={styles.viewDescipcionPelis}>
+            <LinearGradient
+              colors={['rgba(0,0,0,1)', 'rgba(0,0,0,0)']}
+              style={styles.gradient}>
+              <Text style={styles.textFontName}>{nombrePeli}</Text>
+            </LinearGradient>
+          </View>
+        </ImageBackground>
       </Animated.View>
     </TouchableOpacity>
   );
@@ -80,16 +89,37 @@ const CardPeli = props => {
 
 const styles = StyleSheet.create({
   touchable: {
-    backgroundColor: '$000000',
+    padding: 10,
+    // backgroundColor: '$000000',
     marginRight: 10,
     marginTop: 10,
   },
   card: {
     // backgroundColor: '#000000',
-    padding: 20,
-    height: 300,
-    borderRadius: 8,
+    // padding: 10,
+    // height: 150,
+    borderRadius: 20,
     opacity: 1,
+  },
+  textFontName: {
+    color: 'white',
+    fontSize: 10,
+  },
+  viewDescipcionPelis: {
+    height: '50%',
+    bottom: 0,
+    // backgroundColor:
+    //   'linear-gradient(0deg, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 100%)',
+    borderBottomEndRadius: 20,
+    borderBottomLeftRadius: 20,
+  },
+  gradient: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderBottomEndRadius: 20,
+    borderBottomLeftRadius: 20,
+    padding: 5,
   },
 });
 export default CardPeli;
