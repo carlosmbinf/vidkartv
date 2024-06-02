@@ -6,7 +6,6 @@
  */
 
 import React, {useEffect} from 'react';
-import type {PropsWithChildren} from 'react';
 import {
   SafeAreaView,
   ScrollView,
@@ -27,39 +26,46 @@ import MyCarousel from './components/components/MyCarousel';
 import {Button, PaperProvider, Text} from 'react-native-paper';
 import {VideoPlayer} from './components/video/VideoPlayer';
 import {NavigationContainer} from '@react-navigation/native';
-import {Main} from './components/Main/Main';
+import Main from './components/Main/Main';
 import Meteor, {Mongo, withTracker} from '@meteorrn/core';
 
-function App(): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
+const App = () => {
+  // const isDarkMode = useColorScheme() === 'dark';
   useEffect(() => {
     Meteor.connect('ws://vidkar.ddns.net:6000/websocket');
   }, []);
-
-  useEffect(() => {
-    !Meteor.status().connected && Meteor.reconnect();
-  }, [Meteor.status().status]);
+  // useEffect(() => {
+  //   !Meteor.status().connected && Meteor.reconnect();
+  // }, [Meteor.status().status]);
   const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
+    backgroundColor: 'white',//isDarkMode ? Colors.darker : Colors.lighter,
   };
+  
 
   return (
     <NavigationContainer>
       <PaperProvider>
         <StatusBar
-          barStyle={isDarkMode ? 'light-content' : 'dark-content'}
+          barStyle={'light-content'} //isDarkMode ? 'light-content' : 'dark-content'}
           backgroundColor={backgroundStyle.backgroundColor}
         />
         {Meteor.status().connected ? (
           <Main />
         ) : (
-          <Text style={{fontSize: 30}}>OFFLINE</Text>
+          <>
+            <Button
+              onPress={() => {
+                Meteor.reconnect();
+              }}>
+              Reconectar
+            </Button>
+            <Text style={{fontSize: 30}}>OFFLINE</Text>
+          </>
         )}
       </PaperProvider>
     </NavigationContainer>
   );
-}
-
+};
 const styles = StyleSheet.create({
   sectionContainer: {
     marginTop: 32,

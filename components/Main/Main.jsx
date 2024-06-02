@@ -4,18 +4,31 @@ import {View, Text, ScrollView} from 'react-native';
 import {VideoPlayer} from '../video/VideoPlayer';
 import {Button} from 'react-native-paper';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
-import {HomeServices} from './HomeServices';
+import HomeServices from './HomeServices';
 
 const Stack = createNativeStackNavigator();
 
-export const Main = () => {
+const Main = () => {
   return (
     <Stack.Navigator initialRouteName="Home">
       <Stack.Screen
         name="Details"
         options={{
-          statusBarHidden: true,
-          navigationBarHidden: true,
+          title: 'Detalles',
+          headerStyle: {
+            backgroundColor: '#3f51b5',
+            height: 90,
+          },
+          headerTitleAlign: 'center',
+          headerTintColor: '#fff',
+          // headerTitleStyle: {
+          //   fontWeight: 'bold',
+          // },
+          // headerShown: true,
+          // headerRight
+          // headerTransparent:false
+          // statusBarHidden: true,
+          // navigationBarHidden: true,
           headerShown: false,
         }}>
         {props => <HomeServices {...props} />}
@@ -32,3 +45,5 @@ export const Main = () => {
     </Stack.Navigator>
   );
 };
+
+export default Main;
