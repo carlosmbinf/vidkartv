@@ -28,6 +28,9 @@ import {VideoPlayer} from './components/video/VideoPlayer';
 import {NavigationContainer} from '@react-navigation/native';
 import Main from './components/Main/Main';
 import Meteor, {Mongo, withTracker} from '@meteorrn/core';
+import LoginScreen from './components/loguin/LoginScreen';
+import NoSubscriptionScreen from './components/loguin/NoSubscriptionScreen';
+import UpdateApk from './components/loguin/UpdateApk';
 
 class MyApp extends React.Component {
   componentDidMount() {}
@@ -43,9 +46,9 @@ class MyApp extends React.Component {
   }
 
   render() {
-    const {isConected} = this.props;
+    const {isConected,userId,tieneSubscripcion} = this.props;
     // const isDarkMode = useColorScheme() === 'dark';
-
+    console.log('userId',userId);
     const backgroundStyle = {
       // backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
     };
@@ -57,8 +60,20 @@ class MyApp extends React.Component {
             barStyle={'light-content'} //isDarkMode ? 'light-content' : 'dark-content'}
             backgroundColor={backgroundStyle.backgroundColor}
           />
-          {isConected ? (
-            <Main />
+          {true ? (
+            <UpdateApk />
+          ) : isConected ? (
+            userId ? (
+              //comprobar si tiene acceso, si no, redirigir a Pantalla de No Autorizado
+
+              tieneSubscripcion ? (
+                <Main />
+              ) : (
+                <NoSubscriptionScreen />
+              )
+            ) : (
+              <LoginScreen />
+            )
           ) : (
             <>
               <Text style={{fontSize: 30}}>OFFLINE</Text>
@@ -89,9 +104,14 @@ const styles = StyleSheet.create({
 });
 
 const App = withTracker(() => {
+  const userId = Meteor.userId();
+  if(userId){
+    Meteor.subscribe('userID', userId);
+  }
+  const tieneSubscripcion = Meteor.user() && Meteor.user().subscipcionPelis;
   const isConected = Meteor.status().connected;
   console.log('isConected', isConected);
-  return {isConected};
+  return {isConected, userId, tieneSubscripcion};
 })(MyApp);
 
 export default App;

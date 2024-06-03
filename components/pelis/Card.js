@@ -7,22 +7,13 @@ const CardPeli = props => {
   const {nombrePeli, urlBackground, urlPeli} = props.item;
   const {navigation} = props;
   const [mostrar, setMostrar] = React.useState(false);
-  // console.log("navigation" , navigation);
   const [focused, setFocused] = React.useState(false);
-  // const [nombrePeli, setNombrePeli] = React.useState();
-  // const [urlBackground, setUrlBackground] = React.useState();
-  // const [urlPeli, setUrlPeli] = React.useState();
   const scaleValue = React.useRef(new Animated.Value(1)).current;
-  useEffect(() => {
-    console.log('props', props.item);
-    // setNombrePeli(props.item.nombrePeli);
-    // setUrlBackground(props.item.urlBackground);
-    // setUrlPeli(props.item.urlPeli);
-  }, [props.item]);
+ 
 
   React.useEffect(() => {
     Animated.spring(scaleValue, {
-      toValue: focused ? 1.2 : 1, // Cambia el valor de escala
+      toValue: focused ? 1.3 : 1, // Cambia el valor de escala
       friction: 5, // Ajusta la fricción para suavizar el efecto
       useNativeDriver: true,
     }).start();
@@ -31,11 +22,9 @@ const CardPeli = props => {
   return (
     <TouchableOpacity
       onFocus={e => {
-        // e.preventDefault();
         setFocused(true);
       }}
       onBlur={e => {
-        // e.preventDefault();
         setFocused(false);
       }}
       onPress={() => {
@@ -67,6 +56,7 @@ const CardPeli = props => {
             setMostrar(true);
           }}
           source={{uri: urlBackground}}
+          loadingIndicatorSource={require('../../components/files/not-available-rubber-stamp-seal-vector.jpg')}
           style={{
             width: 150,
             height: 100,
@@ -76,7 +66,7 @@ const CardPeli = props => {
           borderRadius={20}>
           <View style={styles.viewDescipcionPelis}>
             <LinearGradient
-              colors={['rgba(0,0,0,1)', 'rgba(0,0,0,0)']}
+              colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.7)', 'rgba(0,0,0,1)']}
               style={styles.gradient}>
               <Text style={styles.textFontName}>{nombrePeli}</Text>
             </LinearGradient>
@@ -90,14 +80,10 @@ const CardPeli = props => {
 const styles = StyleSheet.create({
   touchable: {
     padding: 10,
-    // backgroundColor: '$000000',
     marginRight: 10,
     marginTop: 10,
   },
   card: {
-    // backgroundColor: '#000000',
-    // padding: 10,
-    // height: 150,
     borderRadius: 20,
     opacity: 1,
   },
@@ -108,18 +94,16 @@ const styles = StyleSheet.create({
   viewDescipcionPelis: {
     height: '50%',
     bottom: 0,
-    // backgroundColor:
-    //   'linear-gradient(0deg, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 100%)',
     borderBottomEndRadius: 20,
     borderBottomLeftRadius: 20,
   },
   gradient: {
+    borderBottomRightRadius: 20,
+    borderBottomLeftRadius: 20,
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    borderBottomEndRadius: 20,
-    borderBottomLeftRadius: 20,
-    padding: 5,
+    // padding: 5,
   },
 });
 export default CardPeli;

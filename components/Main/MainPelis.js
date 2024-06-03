@@ -61,48 +61,53 @@ class App extends React.Component {
 
   render() {
     const {navigation, ready, pelis, clasificacion} = this.props;
-    console.log("render");
+    console.log('render');
     return (
-      <View
-        style={{
-          paddingTop: 50,
-          flex: 1,
-          justifyContent: 'center',
-          alignItems: 'center',
-          maxHeight: 190,
-        }}>
-        <View style={{width: '100%'}}>
-          <Text style={{color: '#e5e5e5'}} minimumFontScale={10}>
-            {clasificacion.toUpperCase()}
-          </Text>
-        </View>
+      <>
         {ready ? (
-          // <CardPeli item={this.state.data[0]}/>
-          <FlatList
-            ref={this.flatListRef}
-            focusable={true}
-            accessible={true}
-            data={pelis}
-            renderItem={({item}) => (
-              <CardPeli item={item} navigation={navigation} />
-            )}
-            horizontal={true}
-            scrollEnabled={true}
-            keyExtractor={item => item._id} // Asegúrate de tener una key única
-          />
+          <View
+            style={{
+              paddingTop: 50,
+              flex: 1,
+              justifyContent: 'center',
+              alignItems: 'center',
+              maxHeight: 190,
+            }}>
+            <View style={{width: '100%'}}>
+              <Text style={{color: '#e5e5e5'}} minimumFontScale={10}>
+                {clasificacion.toUpperCase()}
+              </Text>
+            </View>
+            <FlatList
+              ref={this.flatListRef}
+              focusable={true}
+              accessible={true}
+              data={pelis}
+              renderItem={({item}) => (
+                <CardPeli item={item} navigation={navigation} />
+              )}
+              horizontal={true}
+              scrollEnabled={true}
+              keyExtractor={item => item._id} // Asegúrate de tener una key única
+            />
+          </View>
         ) : (
-          <Text>Cargando...</Text>
+          <Text>Loading...</Text>
         )}
-      </View>
+      </>
     );
   }
 }
 
 const MainPelis = withTracker(({navigation, clasificacion}) => {
   // console.log(navigation);
-  let ready = Meteor.subscribe('pelis', {
-    clasificacion: clasificacion,
-  }).ready();
+  let ready = Meteor.subscribe(
+    'pelis',
+    {
+      clasificacion: clasificacion,
+    },
+    {fields: {nombrePeli: 1, urlBackground: 1, urlPeli: 1, clasificacion: 1}},
+  ).ready();
   let pelis = ready
     ? PelisRegister.find(
         {clasificacion: clasificacion},
@@ -115,7 +120,7 @@ const MainPelis = withTracker(({navigation, clasificacion}) => {
     navigation,
     pelis,
     ready,
-    clasificacion
+    clasificacion,
   };
 })(App);
 
