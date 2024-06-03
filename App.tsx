@@ -31,6 +31,8 @@ import Meteor, {Mongo, withTracker} from '@meteorrn/core';
 import LoginScreen from './components/loguin/LoginScreen';
 import NoSubscriptionScreen from './components/loguin/NoSubscriptionScreen';
 import UpdateApk from './components/loguin/UpdateApk';
+import DeviceInfo from 'react-native-device-info';
+import { VersionCollection } from './components/collections/collections';
 
 class MyApp extends React.Component {
   componentDidMount() {}
@@ -46,12 +48,20 @@ class MyApp extends React.Component {
   }
 
   render() {
-    const {isConected,userId,tieneSubscripcion} = this.props;
+    const {isConected, userId, tieneSubscripcion, versionApk, isReadyVersions} =
+      this.props;
     // const isDarkMode = useColorScheme() === 'dark';
-    console.log('userId',userId);
+    console.log('userId', userId);
     const backgroundStyle = {
       // backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
     };
+
+    // Obtener la versión de la aplicación
+    const appVersion = DeviceInfo.getVersion();
+    const appBuildNumber = DeviceInfo.getBuildNumber();
+    console.log('appVersion', appVersion);
+    console.log('appBuildNumber', appBuildNumber);
+    console.log('versionApk', versionApk.version);
 
     return (
       <NavigationContainer>
@@ -60,8 +70,8 @@ class MyApp extends React.Component {
             barStyle={'light-content'} //isDarkMode ? 'light-content' : 'dark-content'}
             backgroundColor={backgroundStyle.backgroundColor}
           />
-          {true ? (
-            <UpdateApk />
+          {isReadyVersions && versionApk && versionApk.version != appVersion ? (
+            <UpdateApk/>
           ) : isConected ? (
             userId ? (
               //comprobar si tiene acceso, si no, redirigir a Pantalla de No Autorizado
@@ -111,7 +121,11 @@ const App = withTracker(() => {
   const tieneSubscripcion = Meteor.user() && Meteor.user().subscipcionPelis;
   const isConected = Meteor.status().connected;
   console.log('isConected', isConected);
-  return {isConected, userId, tieneSubscripcion};
+  const isReadyVersions = Meteor.subscribe('versions', {type:"apkTV"}).ready();
+
+  const versionApk = VersionCollection.findOne({type:"apkTV"});
+
+  return {isConected, userId, tieneSubscripcion, versionApk, isReadyVersions};
 })(MyApp);
 
 export default App;
