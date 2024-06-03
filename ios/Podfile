@@ -16,7 +16,7 @@ if linkage != nil
   use_frameworks! :linkage => linkage.to_sym
 end
 
-# target 'TestApp' do
+# target 'VidKarTV' do
 #   config = use_native_modules!
 #   platform :ios, min_ios_version_supported
 # 
@@ -26,14 +26,14 @@ end
 #     :app_path => "#{Pod::Config.instance.installation_root}/.."
 #   )
 # 
-#   target 'TestAppTests' do
+#   target 'VidKarTVTests' do
 #     inherit! :complete
 #     # Pods for testing
 #   end
 # 
 # end
 
-target 'TestApp-tvOS' do
+target 'VidKarTV-tvOS' do
   config = use_native_modules!
   platform :tvos, min_ios_version_supported
 
@@ -43,7 +43,7 @@ target 'TestApp-tvOS' do
     :app_path => "#{Pod::Config.instance.installation_root}/.."
   )
 
-  target 'TestApp-tvOSTests' do
+  target 'VidKarTV-tvOSTests' do
     inherit! :complete
     # Pods for testing
   end

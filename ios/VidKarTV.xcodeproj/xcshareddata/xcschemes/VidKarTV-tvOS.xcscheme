@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "2D02E47A1E0B4A5D006451C7"
-               BuildableName = "TestApp-tvOS.app"
-               BlueprintName = "TestApp-tvOS"
-               ReferencedContainer = "container:TestApp.xcodeproj">
+               BuildableName = "VidKarTV-tvOS.app"
+               BlueprintName = "VidKarTV-tvOS"
+               ReferencedContainer = "container:VidKarTV.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -33,9 +33,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "2D02E48F1E0B4A5D006451C7"
-               BuildableName = "TestApp-tvOSTests.xctest"
-               BlueprintName = "TestApp-tvOSTests"
-               ReferencedContainer = "container:TestApp.xcodeproj">
+               BuildableName = "VidKarTV-tvOSTests.xctest"
+               BlueprintName = "VidKarTV-tvOSTests"
+               ReferencedContainer = "container:VidKarTV.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
@@ -55,9 +55,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "2D02E47A1E0B4A5D006451C7"
-            BuildableName = "TestApp-tvOS.app"
-            BlueprintName = "TestApp-tvOS"
-            ReferencedContainer = "container:TestApp.xcodeproj">
+            BuildableName = "VidKarTV-tvOS.app"
+            BlueprintName = "VidKarTV-tvOS"
+            ReferencedContainer = "container:VidKarTV.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -72,9 +72,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "2D02E47A1E0B4A5D006451C7"
-            BuildableName = "TestApp-tvOS.app"
-            BlueprintName = "TestApp-tvOS"
-            ReferencedContainer = "container:TestApp.xcodeproj">
+            BuildableName = "VidKarTV-tvOS.app"
+            BlueprintName = "VidKarTV-tvOS"
+            ReferencedContainer = "container:VidKarTV.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

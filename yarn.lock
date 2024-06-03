@@ -2075,12 +2075,12 @@ __metadata:
   linkType: hard
 
 "@expo/osascript@npm:^2.0.31":
-  version: 2.1.2
-  resolution: "@expo/osascript@npm:2.1.2"
+  version: 2.1.3
+  resolution: "@expo/osascript@npm:2.1.3"
   dependencies:
     "@expo/spawn-async": ^1.7.2
     exec-async: ^2.2.0
-  checksum: bbc545dd0a0fc5a0bdb38d571c2b82152ab9b87d3c494d36362c39e522061ed251d005f07df80e7298dec7dfa022adfaeb8cdc30c3161b3984bc370c9e95e874
+  checksum: 6cdc69021d28e68e1b33004521b553040aa659cafd45d67b617644a5ae077a1d6b0884bc7ce7c06dd1c6225a34b221d0671da0febe3687e28d70ef3b99dfaf5a
   languageName: node
   linkType: hard
 
@@ -3510,11 +3510,11 @@ __metadata:
   linkType: hard
 
 "@types/node@npm:*":
-  version: 20.13.0
-  resolution: "@types/node@npm:20.13.0"
+  version: 20.14.0
+  resolution: "@types/node@npm:20.14.0"
   dependencies:
     undici-types: ~5.26.4
-  checksum: 8e061ecd6649bb587b047cee765f530ec43930f30cd47558d9630f5a802d61cf951e9205c610864cfbd58f70478612123e8cb46d58eb4855c695fb8fcaff5b7c
+  checksum: b62383ea004deb1b40c0612f373eaf02247381b65a90f7957dc3034dda9b5622ab61b7afafa82f67909667a5cf9ea43a0643b2a78ea295dac8b77e75e11470d7
   languageName: node
   linkType: hard
 
@@ -3833,9 +3833,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"TestApp@workspace:.":
+"VidKarTV@workspace:.":
   version: 0.0.0-use.local
-  resolution: "TestApp@workspace:."
+  resolution: "VidKarTV@workspace:."
   dependencies:
     "@babel/core": ^7.20.0
     "@babel/preset-env": ^7.20.0

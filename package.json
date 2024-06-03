@@ -1,11 +1,11 @@
 {
-  "name": "TestApp",
+  "name": "VidKarTV",
   "version": "0.0.1",
   "private": true,
   "scripts": {
     "android": "expo run:android",
     "ios": "expo run:ios",
-    "tvos": "expo run:ios --scheme TestApp-tvOS --device \"Apple TV\"",
+    "tvos": "expo run:ios --scheme VidKarTV-tvOS --device \"Apple TV\"",
     "lint": "eslint .",
     "start": "expo start",
     "test": "jest"
