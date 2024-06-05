@@ -32,7 +32,8 @@ import LoginScreen from './components/loguin/LoginScreen';
 import NoSubscriptionScreen from './components/loguin/NoSubscriptionScreen';
 import UpdateApk from './components/loguin/UpdateApk';
 import DeviceInfo from 'react-native-device-info';
-import { VersionCollection } from './components/collections/collections';
+import {VersionCollection} from './components/collections/collections';
+import NoConnectionScreen from './components/loguin/NoConnectionScreen';
 
 class MyApp extends React.Component {
   componentDidMount() {}
@@ -61,7 +62,7 @@ class MyApp extends React.Component {
     const appBuildNumber = DeviceInfo.getBuildNumber();
     console.log('appVersion', appVersion);
     console.log('appBuildNumber', appBuildNumber);
-    console.log('versionApk', versionApk.version);
+    console.log('versionApk', versionApk && versionApk.version);
 
     return (
       <NavigationContainer>
@@ -71,7 +72,7 @@ class MyApp extends React.Component {
             backgroundColor={backgroundStyle.backgroundColor}
           />
           {isReadyVersions && versionApk && versionApk.version != appVersion ? (
-            <UpdateApk/>
+            <UpdateApk apkUrl={versionApk.apkUrl} />
           ) : isConected ? (
             userId ? (
               //comprobar si tiene acceso, si no, redirigir a Pantalla de No Autorizado
@@ -86,7 +87,7 @@ class MyApp extends React.Component {
             )
           ) : (
             <>
-              <Text style={{fontSize: 30}}>OFFLINE</Text>
+              <NoConnectionScreen />
             </>
           )}
         </PaperProvider>
@@ -115,15 +116,15 @@ const styles = StyleSheet.create({
 
 const App = withTracker(() => {
   const userId = Meteor.userId();
-  if(userId){
+  if (userId) {
     Meteor.subscribe('userID', userId);
   }
   const tieneSubscripcion = Meteor.user() && Meteor.user().subscipcionPelis;
   const isConected = Meteor.status().connected;
   console.log('isConected', isConected);
-  const isReadyVersions = Meteor.subscribe('versions', {type:"apkTV"}).ready();
+  const isReadyVersions = Meteor.subscribe('versions', {type: 'apkTV'}).ready();
 
-  const versionApk = VersionCollection.findOne({type:"apkTV"});
+  const versionApk = VersionCollection.findOne({type: 'apkTV'});
 
   return {isConected, userId, tieneSubscripcion, versionApk, isReadyVersions};
 })(MyApp);
