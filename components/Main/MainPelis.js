@@ -7,7 +7,7 @@ import {
   TouchableHighlight,
   StyleSheet,
 } from 'react-native';
-import {Avatar, Button, Card, Text} from 'react-native-paper';
+import {Appbar, Avatar, Button, Card, Text} from 'react-native-paper';
 import {PelisRegister} from '../collections/collections';
 import Meteor, {Mongo, withTracker} from '@meteorrn/core';
 import CardPeli from '../pelis/Card';
@@ -61,10 +61,11 @@ class App extends React.Component {
 
   render() {
     const {navigation, ready, pelis, clasificacion} = this.props;
-    console.log('render');
+    // console.log('render', ready, pelis, clasificacion);
+
     return (
       <>
-        {ready ? (
+        {ready && pelis && pelis.length > 0 ? (
           <View
             style={{
               paddingTop: 50,
@@ -86,9 +87,13 @@ class App extends React.Component {
               renderItem={({item}) => (
                 <CardPeli item={item} navigation={navigation} />
               )}
+              style={{minWidth: '100%'}}
               horizontal={true}
               scrollEnabled={true}
               keyExtractor={item => item._id} // Asegúrate de tener una key única
+              initialNumToRender={10}
+              maxToRenderPerBatch={10}
+              removeClippedSubviews={true}
             />
           </View>
         ) : (
@@ -106,12 +111,29 @@ const MainPelis = withTracker(({navigation, clasificacion}) => {
     {
       clasificacion: clasificacion,
     },
-    {fields: {nombrePeli: 1, urlBackground: 1, urlPeli: 1, clasificacion: 1}},
+    {
+      fields: {
+        _id: 1,
+        nombrePeli: 1,
+        urlBackground: 1,
+        urlPeli: 1,
+        clasificacion: 1,
+        subtitulo: 1,
+      },
+    },
   ).ready();
   let pelis = ready
     ? PelisRegister.find(
         {clasificacion: clasificacion},
-        {fields: {nombrePeli: 1, urlBackground: 1, urlPeli: 1}},
+        {
+          fields: {
+            _id: 1,
+            nombrePeli: 1,
+            urlBackground: 1,
+            urlPeli: 1,
+            subtitulo: 1,
+          },
+        },
       ).fetch()
     : null;
 

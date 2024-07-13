@@ -6,7 +6,7 @@ import Meteor, {Mongo, withTracker} from '@meteorrn/core';
 const NoConnectionScreen = () => {
   return (
     <ImageBackground
-      source={{uri: 'https://www.going.com/_next/image?url=https%3A%2F%2Fgoing-cms-strapi.s3.amazonaws.com%2F6408d1e70d02824e2ca4b003_google_flights_1b7bd78551.webp&w=1920&q=100&dpl=dpl_CWmE5dqzumLPG3re5emVQvLBuzah'}} // Reemplaza con la URL de tu imagen de fondo
+      source={{uri: ''}} // Reemplaza con la URL de tu imagen de fondo
       style={styles.background}>
       <LinearGradient
         colors={['rgba(0,0,0,0.8)', 'rgba(0,0,0,0.6)', 'rgba(0,0,0,0.8)']}
@@ -22,8 +22,8 @@ const NoConnectionScreen = () => {
               <Button
                 mode="contained"
                 onPress={() => {
-                    Alert.alert(JSON.stringify(Meteor.status()));
-                  Meteor.connect('ws://vidkar.ddns.net:6000/websocket');
+                  // Alert.alert(JSON.stringify(Meteor.status()));
+                  Meteor.reconnect();
                 }}
                 style={styles.button}>
                 Reintentar

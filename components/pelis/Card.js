@@ -1,16 +1,22 @@
 import React, {useEffect} from 'react';
-import {Animated, ImageBackground, StyleSheet, TouchableOpacity, View} from 'react-native';
+import {
+  Animated,
+  ImageBackground,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import {Button, Text, Image} from 'react-native-paper';
 
 const CardPeli = props => {
-  const {nombrePeli, urlBackground, urlPeli} = props.item;
+  const {nombrePeli, urlBackground, urlPeli, subtitulo, _id} = props.item;
+  const idPeli = _id;
   const {navigation} = props;
   const [mostrar, setMostrar] = React.useState(false);
   const [focused, setFocused] = React.useState(false);
   const scaleValue = React.useRef(new Animated.Value(1)).current;
- 
-
+  // console.log('CardPeli', nombrePeli);
   React.useEffect(() => {
     Animated.spring(scaleValue, {
       toValue: focused ? 1.3 : 1, // Cambia el valor de escala
@@ -23,14 +29,20 @@ const CardPeli = props => {
     <TouchableOpacity
       onFocus={e => {
         setFocused(true);
+        console.log('FOCUS ' + nombrePeli);
       }}
       onBlur={e => {
         setFocused(false);
+      }}
+      onPressIn={() => {
+        console.log('PRESS IN ' + nombrePeli);
       }}
       onPress={() => {
         console.log('PRESS ' + nombrePeli);
         navigation.navigate('Peli', {
           urlPeli: urlPeli,
+          subtitulo: subtitulo,
+          idPeli: idPeli,
         });
       }}
       style={{
@@ -52,16 +64,23 @@ const CardPeli = props => {
         ]}>
         <ImageBackground
           onLoadEnd={() => {
-            console.log('onLoadEnd', nombrePeli);
+            // console.log('onLoadEnd', nombrePeli);
             setMostrar(true);
           }}
+          onError={e => {
+            console.log('onError', urlBackground);
+            // setMostrar(false);
+          }}
           source={{uri: urlBackground}}
-          loadingIndicatorSource={require('../../components/files/not-available-rubber-stamp-seal-vector.jpg')}
+          // loadingIndicatorSource={require('../../components/files/not-available-rubber-stamp-seal-vector.jpg')}
+          progressiveRenderingEnabled={true}
+          src={urlBackground}
           style={{
             width: 150,
             height: 100,
             borderRadius: 10,
             justifyContent: 'flex-end',
+            backgroundColor: 'black',
           }}
           borderRadius={20}>
           <View style={styles.viewDescipcionPelis}>
