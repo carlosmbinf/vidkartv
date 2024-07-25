@@ -7,7 +7,7 @@ import {
   View,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
-import {Button, Text, Image} from 'react-native-paper';
+import {Button, Text, Image, Surface} from 'react-native-paper';
 
 const CardPeli = props => {
   const {nombrePeli, urlBackground, urlPeli, subtitulo, _id} = props.item;
@@ -40,7 +40,7 @@ const CardPeli = props => {
       onPress={() => {
         console.log('PRESS ' + nombrePeli);
         navigation.navigate('Peli', {
-          urlPeli: urlPeli,
+          urlVideo: urlPeli,
           subtitulo: subtitulo,
           idPeli: idPeli,
         });
@@ -54,6 +54,7 @@ const CardPeli = props => {
         paddingBottom: 0,
         width: 175,
         opacity: focused ? 1 : 0.9,
+        paddingLeft: 40,
       }}>
       <Animated.View
         style={[
@@ -63,22 +64,22 @@ const CardPeli = props => {
           },
         ]}>
         <ImageBackground
-          onLoadEnd={() => {
-            // console.log('onLoadEnd', nombrePeli);
-            setMostrar(true);
-          }}
-          onError={e => {
-            console.log('onError', urlBackground);
-            // setMostrar(false);
-          }}
+          // onLoadEnd={() => {
+          //   // console.log('onLoadEnd', nombrePeli);
+          //   setMostrar(true);
+          // }}
+          // onError={e => {
+          //   console.log('onError', urlBackground);
+          //   setMostrar(false);
+          // }}
           source={{uri: urlBackground}}
+          // defaultSource={require('../../components/files/not-available-rubber-stamp-seal-vector.jpg')}
           // loadingIndicatorSource={require('../../components/files/not-available-rubber-stamp-seal-vector.jpg')}
           progressiveRenderingEnabled={true}
-          src={urlBackground}
           style={{
             width: 150,
             height: 100,
-            borderRadius: 10,
+            borderRadius: 20,
             justifyContent: 'flex-end',
             backgroundColor: 'black',
           }}

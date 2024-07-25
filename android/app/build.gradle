@@ -79,8 +79,15 @@ android {
         applicationId "com.vidkartv"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 5
-        versionName "1.1"
+        versionCode 7
+        versionName '1.2'
+        // Otros valores predeterminados de configuración
+        resValue "bool", "useExoplayerIMA", "true"
+        resValue "bool", "useExoplayerSmoothStreaming", "true"
+        resValue "bool", "useExoplayerDash", "true"
+        resValue "bool", "useExoplayerHls", "true"
+        resValue "bool", "useExoplayerRtsp", "true"
+        resValue "bool", "buildFromSource", "true"
     }
     signingConfigs {
         debug {

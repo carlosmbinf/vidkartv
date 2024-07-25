@@ -42,6 +42,7 @@ class MyApp extends React.Component {
 
   constructor(props) {
     super(props);
+
     // this.state = {
     //   data: this.props.pelis,
     //   isLoading: this.props.pelis ? true : false,
@@ -56,7 +57,6 @@ class MyApp extends React.Component {
     const backgroundStyle = {
       // backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
     };
-
     // Obtener la versión de la aplicación
     const appVersion = DeviceInfo.getVersion();
     const appBuildNumber = DeviceInfo.getBuildNumber();
@@ -69,7 +69,7 @@ class MyApp extends React.Component {
         <PaperProvider>
           <StatusBar
             barStyle={'light-content'} //isDarkMode ? 'light-content' : 'dark-content'}
-            backgroundColor={backgroundStyle.backgroundColor}
+            // backgroundColor={backgroundStyle.backgroundColor}
           />
           {isReadyVersions && versionApk && versionApk.version != appVersion ? (
             <UpdateApk apkUrl={versionApk.apkUrl} />

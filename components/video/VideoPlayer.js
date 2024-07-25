@@ -19,8 +19,9 @@ import {
 } from 'react-native-paper';
 import Slider from '@react-native-community/slider';
 
-export const VideoPlayer = ({navigation, route}) => {
-  const {urlPeli, subtitulo, idPeli} = route.params;
+export const VideoPlayer = ({navigation, route, ocultarControles}) => {
+  const {subtitulo} = route.params;
+  const urlVideo = route.params.urlPeli || route.params.urlVideo;
   const [isModalAudioVisible, setModalAudioVisible] = useState(false);
   const [isModalSubtitleVisible, setModalSubtitleVisible] = useState(false);
   const [isControlVisible, setControlVisible] = useState(false);
@@ -80,6 +81,19 @@ export const VideoPlayer = ({navigation, route}) => {
     }
   }, [currentTime]);
 
+  useEffect(() => {
+    if (focusPlayPause) {
+      setFocusAudio(false);
+      setFocusSubtitle(false);
+    } else if (focusAudio) {
+      setFocusPlayPause(false);
+      setFocusSubtitle(false);
+    } else if (focusSubtitle) {
+      setFocusPlayPause(false);
+      setFocusAudio(false);
+    }
+  }, [focusAudio, focusPlayPause, focusSubtitle]);
+
   const onError = ({error}) => {
     Alert.alert('Error', error.errorString);
     console.error(error.errorString);
@@ -114,13 +128,15 @@ export const VideoPlayer = ({navigation, route}) => {
   };
 
   const toggleControls = () => {
-    setControlVisible(true);
-    if (controlVisibilityTimeout.current) {
-      clearTimeout(controlVisibilityTimeout.current);
+    if(!ocultarControles){
+      setControlVisible(true);
+      if (controlVisibilityTimeout.current) {
+        clearTimeout(controlVisibilityTimeout.current);
+      }
+      controlVisibilityTimeout.current = setTimeout(() => {
+        setControlVisible(false);
+      }, 5000); // Ocultar controles después de 5 segundos de inactividad
     }
-    controlVisibilityTimeout.current = setTimeout(() => {
-      setControlVisible(false);
-    }, 5000); // Ocultar controles después de 5 segundos de inactividad
   };
 
   return (
@@ -139,7 +155,7 @@ export const VideoPlayer = ({navigation, route}) => {
         }}>
         <Video
           ref={videoRef}
-          renderToHardwareTextureAndroid={true}
+          // renderToHardwareTextureAndroid={true}
           pictureInPicture={true}
           bufferConfig={{
             minBufferMs: 15000,
@@ -170,7 +186,7 @@ export const VideoPlayer = ({navigation, route}) => {
                 ]
               : []
           }
-          source={{uri: urlPeli}}
+          source={{uri: urlVideo}}
           onError={onError}
           paused={paused}
           controls={false}
@@ -186,7 +202,7 @@ export const VideoPlayer = ({navigation, route}) => {
             <Slider
               upperLimit={duration}
               isTVSelectable={true}
-              style={[styles.slider, {opacity: focusSlider ? 1 : 0.5}]}
+              style={[styles.slider, {opacity: true ? 1 : 0.6}]}
               minimumValue={0}
               maximumValue={duration}
               value={currentTime}
@@ -204,25 +220,24 @@ export const VideoPlayer = ({navigation, route}) => {
           </View>
 
           <View style={styles.buttons}>
-            <TouchableOpacity
-              disabled={isModalSubtitleVisible || isModalAudioVisible}
-              onFocus={() => setFocusPlayPause(true)}
-              onBlur={() => setFocusPlayPause(false)}
-              hasTVPreferredFocus={true}
-              onPress={togglePause}
-              style={[
-                styles.controlButtonText,
-                {opacity: focusPlayPause ? 1 : 0.5},
-              ]}>
-              <Button
-                buttonColor={focusPlayPause ? 'gray' : 'transparent'}
-                textColor={focusPlayPause ? 'black' : 'white'}
-                style={{borderRadius: 5}}
-                icon={paused ? 'play' : 'pause'}
-                mode="contained-tonal">
-                {paused ? 'Play' : 'Pause'}
-              </Button>
-            </TouchableOpacity>
+            <View>
+              <TouchableOpacity
+                disabled={isModalSubtitleVisible || isModalAudioVisible}
+                hasTVPreferredFocus={true}
+                onFocus={() => setFocusPlayPause(true)}
+                onBlur={() => setFocusPlayPause(false)}
+                onPress={togglePause}
+                style={{opacity: focusPlayPause ? 1 : 0.5}}>
+                <Button
+                  buttonColor={focusPlayPause ? 'gray' : 'transparent'}
+                  textColor={focusPlayPause ? 'black' : 'white'}
+                  style={{borderRadius: 5}}
+                  icon={paused ? 'play' : 'pause'}
+                  mode="contained-tonal">
+                  {paused ? 'Play' : 'Pause'}
+                </Button>
+              </TouchableOpacity>
+            </View>
 
             <View>
               <TouchableOpacity
@@ -230,10 +245,7 @@ export const VideoPlayer = ({navigation, route}) => {
                 onFocus={() => setFocusSubtitle(true)}
                 onBlur={() => setFocusSubtitle(false)}
                 onPress={toggleModalSubtitle}
-                style={[
-                  styles.controlButtonText,
-                  {opacity: focusSubtitle ? 1 : 0.5},
-                ]}>
+                style={{opacity: focusSubtitle ? 1 : 0.5}}>
                 <Button
                   buttonColor={focusSubtitle ? 'gray' : 'transparent'}
                   textColor={focusSubtitle ? 'black' : 'white'}
@@ -270,19 +282,24 @@ export const VideoPlayer = ({navigation, route}) => {
       <Dialog
         visible={isModalSubtitleVisible}
         onDismiss={toggleModalSubtitle}
-        style={{zIndex: 1, height: '50%'}}>
+        style={{
+          zIndex: 1,
+          height: '70%',
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        }}>
         <Dialog.Title>Select Subtitle Track</Dialog.Title>
         <Dialog.Content>
           <ScrollView style={{height: '70%'}}>
             {textTracks.map((track, index) => (
               <TouchableOpacity
-                hasTVPreferredFocus={index == 0 ? true : false}
-                style={{opacity: focusSubtituloSelect ? 1 : 0.8}}
+                hasTVPreferredFocus={index === 0 ? true : false}
+                style={{opacity: focusSubtituloSelect === index ? 1 : 0.7}}
                 key={index}
+                onFocus={() => setFocusSubtituloSelect(index)}
+                onBlur={() => setFocusSubtituloSelect(null)}
                 onPress={() => setSelectedTextTrack(index)}>
                 <RadioButton.Item
-                  onFocus={() => setFocusSubtituloSelect(true)}
-                  onBlur={() => setFocusSubtituloSelect(false)}
+                  color="white"
                   key={index}
                   label={track.title}
                   value={index}
@@ -297,18 +314,26 @@ export const VideoPlayer = ({navigation, route}) => {
           <Button onPress={toggleModalSubtitle}>Close</Button>
         </Dialog.Actions> */}
       </Dialog>
-      <Dialog visible={isModalAudioVisible} onDismiss={toggleModalAudio}>
+      <Dialog
+        visible={isModalAudioVisible}
+        onDismiss={toggleModalAudio}
+        style={{
+          zIndex: 1,
+          height: '50%',
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        }}>
         <Dialog.Title>Select Audio Track</Dialog.Title>
         <Dialog.Content>
           {audioTracks.map((track, index) => (
             <TouchableOpacity
-              hasTVPreferredFocus={true}
-              style={{opacity: focusAudioSelect ? 1 : 0.5}}
-              onFocus={() => setFocusAudioSelect(true)}
-              onBlur={() => setFocusAudioSelect(false)}
+              hasTVPreferredFocus={index === 0 ? true : false}
+              style={{opacity: focusAudioSelect === index ? 1 : 0.6}}
+              onFocus={() => setFocusAudioSelect(index)}
+              onBlur={() => setFocusAudioSelect(null)}
               key={index}
               onPress={() => setSelectedAudioTrack(index)}>
               <RadioButton.Item
+                color="white"
                 key={index}
                 label={track.title}
                 value={index}
@@ -318,9 +343,9 @@ export const VideoPlayer = ({navigation, route}) => {
             </TouchableOpacity>
           ))}
         </Dialog.Content>
-        <Dialog.Actions>
+        {/* <Dialog.Actions>
           <Button onPress={toggleModalAudio}>Close</Button>
-        </Dialog.Actions>
+        </Dialog.Actions> */}
       </Dialog>
     </View>
   );
@@ -360,9 +385,6 @@ const styles = StyleSheet.create({
     padding: 10,
     backgroundColor: 'white',
     borderRadius: 5,
-  },
-  controlButtonText: {
-    color: 'black',
   },
   modalContent: {
     backgroundColor: 'gray',

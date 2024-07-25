@@ -65,7 +65,7 @@ class App extends React.Component {
 
     return (
       <>
-        {ready && pelis && pelis.length > 0 ? (
+        {ready && pelis && pelis.length > 0 && (
           <View
             style={{
               paddingTop: 50,
@@ -92,12 +92,10 @@ class App extends React.Component {
               scrollEnabled={true}
               keyExtractor={item => item._id} // Asegúrate de tener una key única
               initialNumToRender={10}
-              maxToRenderPerBatch={10}
+              maxToRenderPerBatch={20}
               removeClippedSubviews={true}
             />
           </View>
-        ) : (
-          <Text>Loading...</Text>
         )}
       </>
     );

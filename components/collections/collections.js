@@ -8,3 +8,6 @@ export const PelisRegister = new Meteor.Collection('pelisRegister');
 export const PreciosCollection = new Meteor.Collection('precios');
 export const VentasCollection = new Meteor.Collection('ventas');
 export const VersionCollection = new Meteor.Collection('versions');
+export const CapitulosCollection = new Meteor.Collection('seriesCapitulos');
+export const TemporadasCollection = new Meteor.Collection('seriesTemporadas');
+export const SeriesCollection = new Meteor.Collection('series');
