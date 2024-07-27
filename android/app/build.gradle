@@ -79,7 +79,7 @@ android {
         applicationId "com.vidkartv"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 7
+        versionCode 8
         versionName '1.2'
         // Otros valores predeterminados de configuración
         resValue "bool", "useExoplayerIMA", "true"

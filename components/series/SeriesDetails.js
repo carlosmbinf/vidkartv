@@ -161,39 +161,8 @@ const SeriesDetails = ({navigation, route}) => {
     </TouchableOpacity>
   );
 
-  const theme = useTheme({
-    ...useTheme(),
-    dark: true,
-    roundness: 5,
-    animation: {
-      scale: 1.0,
-    },
-    colors: {
-      ...useTheme().colors,
-      primary: '#BB86FC',
-      primaryContainer: '#3700B3',
-      background: '#121212',
-      backgroundColor: '#121212',
-      secondary: '#0000d0',
-      secondaryContainer: '#3535ff',
-      accent: '#FF4081',
-      surface: '#1E1E1E',
-      surfaceVariant: '#121212',
-      onPrimary: '#FFFFFF',
-      onSecondary: '#000000',
-      onBackground: '#FFFFFF',
-      onSurface: '#FFFFFF',
-      text: '#E1E1E1',
-      outlineVariant: '#BB86FC',
-      error: '#CF6679',
-      onError: '#000000',
-      card: '#1E1E1E',
-      notification: '#FF4081',
-    },
-  });
-
   return (
-    <PaperProvider theme={theme}>
+    <>
       <Appbar.Header
         elevated={12}
         style={{backgroundColor: 'rgba(20, 20, 20, 0.73)'}}>
@@ -288,7 +257,7 @@ const SeriesDetails = ({navigation, route}) => {
           </View>
         </View>
       </View>
-    </PaperProvider>
+    </>
   );
 };
 
