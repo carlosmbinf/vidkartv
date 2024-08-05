@@ -82,7 +82,7 @@ const SeriesDetails = ({navigation, route}) => {
       if (capitulos != null && capitulos.length > 0) {
         await setEpisodes(capitulos);
       }
-      console.log('capitulos', capitulos);
+      // console.log('capitulos', capitulos);
     } catch (error) {
       console.error('Error al cargar los capítulos:', error);
     }

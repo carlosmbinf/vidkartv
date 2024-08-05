@@ -1,5 +1,5 @@
 //crear elemento react native Main.js
-import React from 'react';
+import React, { useEffect } from 'react';
 import {View, ScrollView, StyleSheet, TouchableOpacity} from 'react-native';
 import {VideoPlayer} from '../video/VideoPlayer';
 import {
@@ -23,6 +23,7 @@ const Stack = createNativeStackNavigator();
 const Main = () => {
   const [visible, setVisible] = React.useState(false);
   const [active, setActive] = React.useState('first');
+  const [clasificacion, setClasificacion] = React.useState([]);
 
   const categorias = [
     'Sci-Fi',
@@ -47,6 +48,16 @@ const Main = () => {
     console.log('Cierre de sesión');
     Meteor.logout();
   };
+
+  useEffect(() => {
+    Meteor.call('getSeriesClasificacion', (err, res) => {
+      if (err) {
+        console.log(err);
+      } else {
+        setClasificacion(res);
+      }
+    });
+  }, [active]);
 
   const theme = useTheme({
     ...useTheme(),
@@ -181,11 +192,11 @@ const Main = () => {
                 <View style={{flex: 0.8}}>
                   <ScrollView visible={visible} setVisible={setVisible}>
                     {active === 'first'
-                      ? categorias.map((categoria, index) => (
+                      ? clasificacion.map((clasification, index) => (
                           <MainSeries
                             {...props}
                             key={index}
-                            clasificacion={categoria}
+                            clasificacion={clasification}
                           />
                         ))
                       : categorias.map((categoria, index) => (

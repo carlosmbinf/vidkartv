@@ -110,12 +110,12 @@ class App extends React.Component {
 
 const MainSeries = withTracker(({navigation, clasificacion}) => {
   let readySeries = Meteor.subscribe('series', {}).ready();
-
+  console.log(clasificacion);
   let series = readySeries
     ? SeriesCollection.find({clasificacion: clasificacion}, {}).fetch()
     : null;
 
-  // console.log('pelis', pelis);
+  console.log('pelis', series);
   return {
     navigation,
     series,
