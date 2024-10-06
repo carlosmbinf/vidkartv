@@ -32,7 +32,7 @@
             <action android:name="android.intent.action.MAIN" />
 
             <!-- Needed to properly create a launch intent when running on Android TV -->
-            <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
+            <!-- <category android:name="android.intent.category.LEANBACK_LAUNCHER" /> -->
 
             <category android:name="android.intent.category.LAUNCHER" />
         </intent-filter>

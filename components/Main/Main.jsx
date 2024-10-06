@@ -1,22 +1,26 @@
 //crear elemento react native Main.js
 import React, { useEffect } from 'react';
-import {View, ScrollView, StyleSheet, TouchableOpacity} from 'react-native';
+import {View, ScrollView, StyleSheet, TouchableOpacity, Dimensions} from 'react-native';
 import {VideoPlayer} from '../video/VideoPlayer';
 import {
   Appbar,
   Button,
-  Drawer,
   PaperProvider,
   useTheme,
   Text,
   IconButton,
   Icon,
 } from 'react-native-paper';
+import Drawer from 'react-native-drawer';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import MainPelis from './MainPelis';
 import Meteor, {Mongo, withTracker} from '@meteorrn/core';
 import MainSeries from './MainSeries';
 import SeriesDetails from '../series/SeriesDetails';
+import DrawerOptionsAlls from '../drawer/DrawerOptionsAlls';
+
+const {width: screenWidth} = Dimensions.get('window');
+const {height: screenHeight} = Dimensions.get('window');
 
 const Stack = createNativeStackNavigator();
 
@@ -24,6 +28,44 @@ const Main = () => {
   const [visible, setVisible] = React.useState(false);
   const [active, setActive] = React.useState('first');
   const [clasificacion, setClasificacion] = React.useState([]);
+  const [drawer, setDrawer] = React.useState(false);
+  const [orientation, setOrientation] = React.useState('Portrait');
+
+  const handleOrientationChange = () => {
+    const {height, width} = Dimensions.get('window');
+    if (height > width) {
+      setOrientation('Portrait'); // Vertical
+    } else {
+      setOrientation('Landscape'); // Horizontal
+    }
+  };
+
+  useEffect(() => {
+    const subscription = Dimensions.addEventListener(
+      'change',
+      handleOrientationChange,
+    );
+
+    // Establecer la orientación inicial
+    handleOrientationChange();
+
+    return () => {
+      subscription?.remove();
+    };
+  }, []);
+
+  const opcionesServicios = [
+    {
+      label: 'Peliculas',
+      url: 'Peliculas',
+      icon: 'movie-filter',
+    },
+    {
+      label: 'Series',
+      url: 'Series',
+      icon: 'movie-filter',
+    },
+  ];
 
   const categorias = [
     'Sci-Fi',
@@ -58,6 +100,16 @@ const Main = () => {
       }
     });
   }, [active]);
+
+  const drawerStyles = {
+    drawer: {
+      shadowColor: 'black',
+      shadowOpacity: 0,
+      shadowRadius: 3,
+      backgroundColor: 'black',
+    },
+    main: {paddingLeft: 0},
+  };
 
   const theme = useTheme({
     ...useTheme(),
@@ -136,79 +188,97 @@ const Main = () => {
           }}>
           {props => (
             <>
-              <Appbar.Header
-                elevated={12}
-                style={{backgroundColor: 'rgba(20, 20, 20, 0.73)'}}>
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    width: '100%',
-                    paddingLeft: 10,
-                    paddingRight: 10,
-                  }}>
-                  <Button
-                    icon={'account-off'}
-                    mode="outlined"
-                    onPress={handleLogout}>
-                    Cerrar Sesión
-                  </Button>
-                  {/* <Icon source={'home'} isTVSelectable={false} size={25} /> */}
-                  <View style={{flexDirection: 'row'}}>
-                    {/* <Appbar.Action icon={'home'} disabled isTVSelectable={false} /> */}
+              <Drawer
+                // key={orientation}
+                type="overlay"
+                open={drawer}
+                content={
+                  <DrawerOptionsAlls
+                    navigation={props.navigation}
+                    setActive={setActive}
+                    active={active}
+                    opcionesServicios={opcionesServicios}
+                  />
+                }
+                tapToClose={true}
+                // captureGestures="closed"
+                // acceptPanOnDrawer={false}
+                // acceptPan={true}
+                onClose={() => setDrawer(false)}
+                elevation={12}
+                side="left"
+                openDrawerOffset={orientation == 'Portrait' ? 0.4 : 0.6} // 20% gap on the right side of drawer
+                panCloseMask={0.5}
+                closedDrawerOffset={0}
+                styles={drawerStyles}
+                tweenHandler={ratio => ({
+                  main: {opacity: (2 - ratio) / 2},
+                })}>
+                <>
+                  <Appbar.Header
+                    elevated={12}
+                    style={{backgroundColor: 'rgba(20, 20, 20, 0.73)'}}>
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        // alignItems: 'center',
+                        justifyContent: 'space-between',
+                        width: '100%',
+                        paddingLeft: 10,
+                        paddingRight: 10,
+                      }}>
+                      <IconButton
+                        icon={'format-list-bulleted'}
+                        // mode="outlined"
+                        onPress={() => setDrawer(true)}
+                      />
+
+                      <Button
+                        icon={'account-off'}
+                        mode="outlined"
+                        onPress={handleLogout}>
+                        Cerrar Sesión
+                      </Button>
+                      {/* <Icon source={'home'} isTVSelectable={false} size={25} /> */}
+
+                      {/* <IconButton
+                    icon="menu"
+                    color="white"
+                    size={30}
+                    onPress={() => setDrawer(true)}
+                    style={{position: 'absolute', left: 10, top: 10}}
+                  /> */}
+                      {/* <View style={{flexDirection: 'column'}}> */}
+
+                      {/* <Appbar.Action icon={'home'} disabled isTVSelectable={false} />
                     <Text
-                      style={{fontSize: 20}}>{`Bienvenido, ${userName}`}</Text>
+                      style={{fontSize: 20}}>{`${userName}`}</Text>
+                  </View> */}
+                    </View>
+                  </Appbar.Header>
+                  <View style={styles.menuLateral}>
+                    <View>
+                      <ScrollView visible={visible} setVisible={setVisible}>
+                        {active === opcionesServicios[1].url
+                          ? clasificacion.map((clasification, index) => (
+                              <MainSeries
+                                {...props}
+                                key={index}
+                                clasificacion={clasification}
+                              />
+                            ))
+                          : categorias.map((categoria, index) => (
+                              <MainPelis
+                                {...props}
+                                key={index}
+                                clasificacion={categoria}
+                              />
+                            ))}
+                      </ScrollView>
+                    </View>
                   </View>
-                </View>
-              </Appbar.Header>
-              <View style={styles.menuLateral}>
-                <View
-                  style={{
-                    flex: 0.2,
-                    backgroundColor: 'rgba(20, 20, 20, 0.73)',
-                  }}>
-                  <Drawer.Section
-                    title="Que desea ver:"
-                    showDivider={false}
-                    style={{
-                      height: '100%',
-                    }}>
-                    <Drawer.Item
-                      // background={'white'}
-                      onfocus={() => console.log('focus')}
-                      label="Series"
-                      active={active === 'first'}
-                      onPress={() => setActive('first')}
-                    />
-                    <Drawer.Item
-                      onfocus={() => console.log('focus')}
-                      label="Peliculas"
-                      active={active === 'second'}
-                      onPress={() => setActive('second')}
-                    />
-                  </Drawer.Section>
-                </View>
-                <View style={{flex: 0.8}}>
-                  <ScrollView visible={visible} setVisible={setVisible}>
-                    {active === 'first'
-                      ? clasificacion.map((clasification, index) => (
-                          <MainSeries
-                            {...props}
-                            key={index}
-                            clasificacion={clasification}
-                          />
-                        ))
-                      : categorias.map((categoria, index) => (
-                          <MainPelis
-                            {...props}
-                            key={index}
-                            clasificacion={categoria}
-                          />
-                        ))}
-                  </ScrollView>
-                </View>
-              </View>
+                </>
+              </Drawer>
             </>
           )}
         </Stack.Screen>
@@ -248,7 +318,7 @@ const styles = StyleSheet.create({
     height: '100%',
     width: '100%',
     // padding: 20,
-    paddingBottom: 65,
+    // paddingBottom: 65,
   },
   logoutButton: {
     marginRight: 10,
