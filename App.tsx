@@ -72,7 +72,7 @@ class MyApp extends React.Component {
             // backgroundColor={backgroundStyle.backgroundColor}
           />
           {isReadyVersions && versionApk && versionApk.version != appVersion ? (
-            <UpdateApk apkUrl={versionApk.apkUrl} />
+            <UpdateApk apkUrl={versionApk.apkUrl} appVersion={appVersion} />
           ) : isConected ? (
             userId ? (
               //comprobar si tiene acceso, si no, redirigir a Pantalla de No Autorizado

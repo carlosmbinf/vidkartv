@@ -11,7 +11,7 @@ import {
 import {Button, Card, Title} from 'react-native-paper';
 import LinearGradient from 'react-native-linear-gradient';
 
-const UpdateApk = ({apkUrl}) => {
+const UpdateApk = ({apkUrl,appVersion}) => {
   const [descargando, setDescargando] = useState(false);
 
   return (
@@ -25,7 +25,8 @@ const UpdateApk = ({apkUrl}) => {
           <Card style={styles.card}>
             <Card.Content>
               <Title style={styles.title}>
-                Hay Una Actualización de la APK
+                Hay Una Actualización de la APK, 
+                Version Actual:{appVersion}
               </Title>
               <Text style={styles.message}>
                 Necesita actualizar la aplicación en su TV.
