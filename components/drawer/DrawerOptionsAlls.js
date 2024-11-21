@@ -61,7 +61,7 @@ const DrawerOptionsAlls = opt => {
             })}
           </Drawer.Section>
 
-          <Drawer.Section title="Opciones de Administradores">
+          {/* <Drawer.Section title="Opciones de Administradores">
             {opcionesAdministradores.length > 0 &&
               opcionesAdministradores.map(element => {
                 return (
@@ -94,7 +94,7 @@ const DrawerOptionsAlls = opt => {
                   );
                 })}
             </Drawer.Section>
-          )}
+          )} */}
         </Surface>
       </ScrollView>
     </>
