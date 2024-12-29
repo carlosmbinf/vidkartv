@@ -15,11 +15,9 @@ import CardPeli from '../pelis/Card';
 const LeftContent = props => <Avatar.Icon {...props} icon="folder" />;
 class App extends React.Component {
   componentDidMount() {
-    console.log('componentDidMount');
-    // console.log(this.flatListRef.current);
     // this.flatListRef.current?.focus();
     // Orientation.lockToPortrait();
-    console.log('componentDidMount');
+    // console.log('componentDidMount');
     this.setState = {
       data: this.props.pelis,
       isReady: this.props.ready,
@@ -27,7 +25,7 @@ class App extends React.Component {
   }
 
   componentWillUnmount() {
-    console.log('componentWillUnmount');
+    // console.log('componentWillUnmount');
     // Orientation.unlockAllOrientations();
     this.state = {
       data: [],
@@ -36,7 +34,7 @@ class App extends React.Component {
   }
 
   componentDidUpdate(prevProps) {
-    console.log('componentDidUpdate');
+    // console.log('componentDidUpdate');
     // console.log('this.props.pelis', this.props.pelis);
     // console.log('isReady', this.props.ready);
   }
@@ -60,7 +58,7 @@ class App extends React.Component {
   }
 
   render() {
-    const {navigation, ready, pelis, clasificacion} = this.props;
+    const {navigation, ready, pelis, clasificacion, filtro} = this.props;
     // console.log('render', ready, pelis, clasificacion);
 
     return (
@@ -80,10 +78,16 @@ class App extends React.Component {
               </Text>
             </View>
             <FlatList
+            viewabilityConfig={{
+      waitForInteraction: true,
+      viewAreaCoveragePercentThreshold: 95
+  }}
+            progressViewOffset={5}
               ref={this.flatListRef}
               focusable={true}
               accessible={true}
               data={pelis}
+              isTVSelectable={true}
               renderItem={({item}) => (
                 <CardPeli item={item} navigation={navigation} />
               )}
@@ -93,7 +97,7 @@ class App extends React.Component {
               keyExtractor={item => item._id} // Asegúrate de tener una key única
               initialNumToRender={10}
               maxToRenderPerBatch={20}
-              removeClippedSubviews={true}
+              removeClippedSubviews={false}
             />
           </View>
         )}
@@ -102,35 +106,66 @@ class App extends React.Component {
   }
 }
 
-const MainPelis = withTracker(({navigation, clasificacion}) => {
+const MainPelis = withTracker(({navigation, clasificacion, filtro}) => {
   // console.log(navigation);
+  // Construye dinámicamente los filtros
+let query = { clasificacion: clasificacion }; // Campo obligatorio
+
+if (filtro) {
+  query.nombrePeli = { $regex: filtro, $options: "i" }; // Agrega el filtro dinámicamente
+}
   let ready = Meteor.subscribe(
-    'pelis',
-    {
+    'pelis', filtro ? {
       clasificacion: clasificacion,
-    },
+      $or: [
+        { nombrePeli: { $regex: filtro, $options: 'i' } }, // 'i' hace que sea insensible a mayúsculas/minúsculas
+        { year: parseInt(filtro) || 0 }, // 'i' hace que sea insensible a mayúsculas/minúsculas
+        { extension: { $regex: filtro, $options: 'i' } },
+        { actors: { $regex: filtro, $options: 'i' } }
+      ],
+    } : { clasificacion: clasificacion },
     {
       fields: {
         _id: 1,
         nombrePeli: 1,
-        urlBackground: 1,
+        // urlBackground: 1,
         urlPeli: 1,
         clasificacion: 1,
         subtitulo: 1,
+        vistas: 1,
+        extension: 1,
+        year: 1,
+        actors: 1,
       },
+      sort: { vistas: -1 },
+      limit: 20,
     },
   ).ready();
+  //ordenar por vistas
   let pelis = ready
-    ? PelisRegister.find(
-        {clasificacion: clasificacion},
+    ? PelisRegister.find(filtro ? {
+      clasificacion: clasificacion,
+      $or: [
+        { nombrePeli: { $regex: filtro, $options: 'i' } }, // 'i' hace que sea insensible a mayúsculas/minúsculas
+        { year: { $regex: filtro, $options: 'i' } }, // 'i' hace que sea insensible a mayúsculas/minúsculas
+        { extension: { $regex: filtro, $options: 'i' } },
+        { actors: { $regex: filtro, $options: 'i' } }
+      ],
+    } : { clasificacion: clasificacion },
         {
           fields: {
             _id: 1,
             nombrePeli: 1,
-            urlBackground: 1,
+            // urlBackground: 1,
             urlPeli: 1,
             subtitulo: 1,
+            vistas: 1,
+            extension: 1,
+            year: 1,
+            actors: 1,
           },
+          sort: { vistas: -1 },
+          limit: 30,
         },
       ).fetch()
     : null;

@@ -7,7 +7,7 @@ import {
   TextInput,
   TouchableOpacity,
 } from 'react-native';
-import {Button, Card, Title} from 'react-native-paper';
+import {Button, Card, Title, useTheme} from 'react-native-paper';
 import LinearGradient from 'react-native-linear-gradient';
 import Meteor, {Mongo, withTracker} from '@meteorrn/core';
 const LoginScreen = () => {
@@ -15,6 +15,8 @@ const LoginScreen = () => {
   const [password, setPassword] = useState(''); // Estado para el campo de contraseña
   const usernameRef = useRef(null);
   const passwordRef = useRef(null);
+
+  const theme = useTheme();
 
   const loguear = () => {
     console.log('Logging in');
@@ -39,12 +41,12 @@ const LoginScreen = () => {
         colors={['rgba(0,0,0,0.8)', 'rgba(0,0,0,0.6)', 'rgba(0,0,0,0.8)']}
         style={styles.overlay}>
         <View style={styles.container}>
-          <Title style={styles.welcomeText}>Bienvenido a VidKar</Title>
-          <Text style={styles.subTitle}>Sitio de Películas en Streaming</Text>
+          <Title style={styles.welcomeText}>Welcome to VidKar</Title>
+          <Text style={styles.subTitle}>Streaming Movies</Text>
 
           <Card style={styles.card}>
             <Card.Content>
-              <TouchableOpacity onPress={() => usernameRef.current.focus()}>
+              <TouchableOpacity onPress={() => usernameRef.current.focus()} activeOpacity={0.5}>
                 <TextInput
                   autoComplete="username"
                   ref={usernameRef}
@@ -62,7 +64,7 @@ const LoginScreen = () => {
                   onChangeText={text => setUsername(text)}
                 />
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => usernameRef.current.focus()}>
+              <TouchableOpacity onPress={() => usernameRef.current.focus()} activeOpacity={0.5}>
                 <TextInput
                   autoComplete="password"
                   ref={passwordRef}
@@ -81,12 +83,15 @@ const LoginScreen = () => {
                 />
               </TouchableOpacity>
 
+              <TouchableOpacity onPress={() => loguear()} activeOpacity={0.5}>
               <Button
                 mode="contained"
-                onPress={() => loguear()}
-                style={styles.button}>
+                textColor={theme.colors.onPrimaryContainer}
+                style={[styles.button, {backgroundColor: theme.colors.primaryContainer}]}>
                 Iniciar Sesión
               </Button>
+              </TouchableOpacity>
+              
             </Card.Content>
           </Card>
         </View>
@@ -137,7 +142,7 @@ const styles = StyleSheet.create({
   },
   button: {
     marginTop: 20,
-    backgroundColor: '#6200ee',
+    // backgroundColor: '#6200ee',
   },
 });
 

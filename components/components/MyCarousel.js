@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Image, View } from "react-native";
 import { Text } from "react-native-paper";
-import { VideoPlayer } from "../video/VideoPlayer";
+import { VideoPlayer } from "../video/VideoPlayerViejo";
  
 const COUNT = 6;
  

@@ -33,9 +33,7 @@ const CardSerie = props => {
 
   const fetchSeasons = idSerieSeasons => {
     try {
-      console.log('fetchSeasons - idSerieSeasons', idSerieSeasons);
-      Meteor.subscribe('temporadas', {}, {});
-      Meteor.subscribe('capitulos', {}, {fields: {textSubtitle: 0}});
+      Meteor.subscribe('temporadas', {idSerie:idSerieSeasons}, {});
     } catch (error) {
       console.error('Error al cargar las temporadas:', error);
     }

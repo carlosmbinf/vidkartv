@@ -7,25 +7,23 @@ import {
   TouchableHighlight,
   StyleSheet,
 } from 'react-native';
-import {Appbar, Avatar, Button, Card, Text} from 'react-native-paper';
+import { Appbar, Avatar, Button, Card, Text } from 'react-native-paper';
 import {
   CapitulosCollection,
   PelisRegister,
   SeriesCollection,
   TemporadasCollection,
 } from '../collections/collections';
-import Meteor, {Mongo, withTracker} from '@meteorrn/core';
+import Meteor, { Mongo, withTracker } from '@meteorrn/core';
 import CardPeli from '../pelis/Card';
 import CardSerie from '../series/CardSerie';
 
 const LeftContent = props => <Avatar.Icon {...props} icon="folder" />;
 class App extends React.Component {
   componentDidMount() {
-    console.log('componentDidMount');
-    // console.log(this.flatListRef.current);
     // this.flatListRef.current?.focus();
     // Orientation.lockToPortrait();
-    console.log('componentDidMount');
+    // console.log('componentDidMount');
     this.setState = {
       data: this.props.pelis,
       isReady: this.props.ready,
@@ -33,7 +31,7 @@ class App extends React.Component {
   }
 
   componentWillUnmount() {
-    console.log('componentWillUnmount');
+    // console.log('componentWillUnmount');
     // Orientation.unlockAllOrientations();
     this.state = {
       data: [],
@@ -42,7 +40,7 @@ class App extends React.Component {
   }
 
   componentDidUpdate(prevProps) {
-    console.log('componentDidUpdate');
+    // console.log('componentDidUpdate');
     // console.log('this.props.pelis', this.props.pelis);
     // console.log('isReady', this.props.ready);
   }
@@ -66,7 +64,7 @@ class App extends React.Component {
   }
 
   render() {
-    const {navigation, ready, series, clasificacion} = this.props;
+    const { navigation, ready, series, clasificacion } = this.props;
     // console.log('render', ready, pelis, clasificacion);
 
     return (
@@ -80,8 +78,8 @@ class App extends React.Component {
               alignItems: 'center',
               maxHeight: 190,
             }}>
-            <View style={{width: '100%'}}>
-              <Text style={{color: '#e5e5e5'}} minimumFontScale={10}>
+            <View style={{ width: '100%' }}>
+              <Text style={{ color: '#e5e5e5' }} minimumFontScale={10}>
                 {clasificacion.toUpperCase()}
               </Text>
             </View>
@@ -90,10 +88,10 @@ class App extends React.Component {
               focusable={true}
               accessible={true}
               data={series}
-              renderItem={({item}) => (
+              renderItem={({ item }) => (
                 <CardSerie item={item} navigation={navigation} />
               )}
-              style={{minWidth: '100%'}}
+              style={{ minWidth: '100%' }}
               horizontal={true}
               scrollEnabled={true}
               keyExtractor={item => item._id} // Asegúrate de tener una key única
@@ -108,14 +106,27 @@ class App extends React.Component {
   }
 }
 
-const MainSeries = withTracker(({navigation, clasificacion}) => {
-  let readySeries = Meteor.subscribe('series', {}).ready();
-  console.log(clasificacion);
+const MainSeries = withTracker(({ navigation, clasificacion, filtro }) => {
+  let readySeries = Meteor.subscribe('series', filtro ? {
+    clasificacion: clasificacion,
+    $or: [
+      { nombre: { $regex: filtro, $options: 'i' } }, // 'i' hace que sea insensible a mayúsculas/minúsculas
+      { anoLanzamiento: parseInt(filtro) || 0 }, // 'i' hace que sea insensible a mayúsculas/minúsculas
+      { actors: { $regex: filtro, $options: 'i' } },
+    ],
+  } : { clasificacion: clasificacion }, { limit: 50 }).ready();
+
   let series = readySeries
-    ? SeriesCollection.find({clasificacion: clasificacion}, {}).fetch()
+    ? SeriesCollection.find(filtro ? {
+      clasificacion: clasificacion,
+      $or: [
+        { nombre: { $regex: filtro, $options: 'i' } }, // 'i' hace que sea insensible a mayúsculas/minúsculas
+        { anoLanzamiento: parseInt(filtro) || 0 }, // 'i' hace que sea insensible a mayúsculas/minúsculas
+        { actors: { $regex: filtro, $options: 'i' } },
+      ],
+    } : { clasificacion: clasificacion }, { limit: 50 }).fetch()
     : null;
 
-  console.log('pelis', series);
   return {
     navigation,
     series,

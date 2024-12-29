@@ -8,7 +8,7 @@ import {
   BackHandler,
   ScrollView,
 } from 'react-native';
-import Video from 'react-native-video';
+import Video, { TextTrackType } from 'react-native-video';
 import {
   Button,
   Card,
@@ -18,9 +18,10 @@ import {
   RadioButton,
 } from 'react-native-paper';
 import Slider from '@react-native-community/slider';
-
+import Meteor, {Mongo, withTracker} from '@meteorrn/core';
 export const VideoPlayer = ({navigation, route, ocultarControles}) => {
-  const {subtitulo} = route.params;
+  const {subtitulo,_id, isSerie} = route.params;
+  // const subtitulo = "https://vidkar.ddns.net/getsubtitle?idPeli=" + id;
   const urlVideo = route.params.urlPeli || route.params.urlVideo;
   const [isModalAudioVisible, setModalAudioVisible] = useState(false);
   const [isModalSubtitleVisible, setModalSubtitleVisible] = useState(false);
@@ -95,8 +96,9 @@ export const VideoPlayer = ({navigation, route, ocultarControles}) => {
   }, [focusAudio, focusPlayPause, focusSubtitle]);
 
   const onError = ({error}) => {
+    // console.log("option",option);
     Alert.alert('Error', error.errorString);
-    console.error(error.errorString);
+    console.log(error.errorString);
   };
 
   const toggleModalAudio = () => {
@@ -112,6 +114,31 @@ export const VideoPlayer = ({navigation, route, ocultarControles}) => {
 
   const onLoad = data => {
     setAudioTracks(data.audioTracks);
+    isSerie ? Meteor.call('addVistasSeries', _id, (error, result) => {
+      if (error) {
+        console.log('error', error);
+      } else {
+        console.log('result', result);
+      }
+    }) :
+      Meteor.call('addVistas', _id, (error, result) => {
+        if (error) {
+          console.log('error', error);
+        } else {
+          console.log('result', result);
+        }
+      });
+
+    console.log(data.textTracks);
+    // data.textTracks &&
+    // //agregar subtitulo a textTracks
+    // data.textTracks.push({
+    //   index: data.textTracks.length,
+    //   title: 'Spanish VidKar',
+    //   language: 'es',
+    //   type: 'application/x-media3-cues',
+    //   uri: subtitulo,
+    // });
     setTextTracks(data.textTracks);
     setDuration(data.duration);
   };
@@ -128,15 +155,14 @@ export const VideoPlayer = ({navigation, route, ocultarControles}) => {
   };
 
   const toggleControls = () => {
-    if(!ocultarControles){
-      setControlVisible(true);
+      setControlVisible(isControlVisible => !isControlVisible);
       if (controlVisibilityTimeout.current) {
         clearTimeout(controlVisibilityTimeout.current);
       }
       controlVisibilityTimeout.current = setTimeout(() => {
         setControlVisible(false);
       }, 5000); // Ocultar controles después de 5 segundos de inactividad
-    }
+    
   };
 
   return (
@@ -156,6 +182,8 @@ export const VideoPlayer = ({navigation, route, ocultarControles}) => {
         <Video
           ref={videoRef}
           // renderToHardwareTextureAndroid={true}
+          disableExoPlayer={true}
+          allowsExternalPlayback={true}
           pictureInPicture={true}
           bufferConfig={{
             minBufferMs: 15000,
@@ -176,16 +204,24 @@ export const VideoPlayer = ({navigation, route, ocultarControles}) => {
           textTracks={
             subtitulo
               ? [
+                  // {
+                  //   index: 20,
+                  //   title: 'Spanish VidKar VTT',
+                  //   language: 'es',
+                  //   type: TextTrackType.VTT,
+                  //   uri: 'https://www.vidkar.com/getsubtitle?idPeli='+_id,
+                  // },
                   {
-                    index: 20,
-                    title: 'Spanish VidKar',
+                    index: 21,
+                    title: 'Spanish VidKar SRT',
                     language: 'es',
-                    type: 'application/x-subrip',
+                    type: TextTrackType.SUBRIP,
                     uri: subtitulo,
                   },
                 ]
               : []
           }
+          showNotificationControls={true}
           source={{uri: urlVideo}}
           onError={onError}
           paused={paused}
@@ -220,38 +256,39 @@ export const VideoPlayer = ({navigation, route, ocultarControles}) => {
           </View>
 
           <View style={styles.buttons}>
-            <View>
               <TouchableOpacity
                 disabled={isModalSubtitleVisible || isModalAudioVisible}
                 hasTVPreferredFocus={true}
                 onFocus={() => setFocusPlayPause(true)}
                 onBlur={() => setFocusPlayPause(false)}
                 onPress={togglePause}
-                style={{opacity: focusPlayPause ? 1 : 0.5}}>
+                // style={{opacity: focusPlayPause ? 1 : 0.5}}
+                activeOpacity={focusPlayPause ? 1 : 0.7}
+                >
                 <Button
                   buttonColor={focusPlayPause ? 'gray' : 'transparent'}
                   textColor={focusPlayPause ? 'black' : 'white'}
                   style={{borderRadius: 5}}
                   icon={paused ? 'play' : 'pause'}
-                  mode="contained-tonal">
+                  mode="contained">
                   {paused ? 'Play' : 'Pause'}
                 </Button>
               </TouchableOpacity>
-            </View>
-
-            <View>
+              
               <TouchableOpacity
                 disabled={isModalSubtitleVisible || isModalAudioVisible}
                 onFocus={() => setFocusSubtitle(true)}
                 onBlur={() => setFocusSubtitle(false)}
                 onPress={toggleModalSubtitle}
-                style={{opacity: focusSubtitle ? 1 : 0.5}}>
+                // style={{opacity: focusSubtitle ? 1 : 0.5}}
+                activeOpacity={focusSubtitle ? 1 : 0.7}
+                >
                 <Button
-                  buttonColor={focusSubtitle ? 'gray' : 'transparent'}
-                  textColor={focusSubtitle ? 'black' : 'white'}
+                  // buttonColor={focusSubtitle ? 'gray' : 'transparent'}
+                  // textColor={focusSubtitle ? 'black' : 'white'}
                   style={{borderRadius: 5}}
                   icon={'subtitles'}
-                  mode="contained-tonal">
+                  mode="contained">
                   Subtitles
                 </Button>
               </TouchableOpacity>
@@ -260,22 +297,23 @@ export const VideoPlayer = ({navigation, route, ocultarControles}) => {
                 onFocus={() => setFocusAudio(true)}
                 onBlur={() => setFocusAudio(false)}
                 onPress={toggleModalAudio}
-                style={[
-                  styles.controlButtonText,
-                  {opacity: focusAudio ? 1 : 0.5},
-                ]}>
+                // style={[
+                //   styles.controlButtonText,
+                //   {opacity: focusAudio ? 1 : 0.5},
+                // ]}
+                activeOpacity={focusAudio ? 1 : 0.7}
+                >
                 <Button
                   onFocus={() => setFocusAudio(true)}
                   onBlur={() => setFocusAudio(false)}
-                  buttonColor={focusAudio ? 'gray' : 'transparent'}
-                  textColor={focusAudio ? 'black' : 'white'}
+                  // buttonColor={focusAudio ? 'gray' : 'transparent'}
+                  // textColor={focusAudio ? 'black' : 'white'}
                   style={{borderRadius: 5}}
                   icon={'volume-high'}
-                  mode="contained-tonal">
+                  mode="contained">
                   Audio
                 </Button>
               </TouchableOpacity>
-            </View>
           </View>
         </View>
       )}
@@ -285,21 +323,21 @@ export const VideoPlayer = ({navigation, route, ocultarControles}) => {
         style={{
           zIndex: 1,
           height: '70%',
-          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          // backgroundColor: 'rgba(0, 0, 0, 0.8)',
         }}>
         <Dialog.Title>Select Subtitle Track</Dialog.Title>
         <Dialog.Content>
           <ScrollView style={{height: '70%'}}>
             {textTracks.map((track, index) => (
               <TouchableOpacity
-                hasTVPreferredFocus={index === 0 ? true : false}
-                style={{opacity: focusSubtituloSelect === index ? 1 : 0.7}}
+                // hasTVPreferredFocus={index === 0 ? true : false}
+                // style={{opacity: focusSubtituloSelect === index ? 1 : 0.7}}
                 key={index}
                 onFocus={() => setFocusSubtituloSelect(index)}
                 onBlur={() => setFocusSubtituloSelect(null)}
                 onPress={() => setSelectedTextTrack(index)}>
                 <RadioButton.Item
-                  color="white"
+                  // color="white"
                   key={index}
                   label={track.title}
                   value={index}
@@ -320,11 +358,12 @@ export const VideoPlayer = ({navigation, route, ocultarControles}) => {
         style={{
           zIndex: 1,
           height: '50%',
-          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          // backgroundColor: 'rgba(0, 0, 0, 0.8)',
         }}>
         <Dialog.Title>Select Audio Track</Dialog.Title>
         <Dialog.Content>
           {audioTracks.map((track, index) => (
+
             <TouchableOpacity
               hasTVPreferredFocus={index === 0 ? true : false}
               style={{opacity: focusAudioSelect === index ? 1 : 0.6}}
@@ -333,7 +372,7 @@ export const VideoPlayer = ({navigation, route, ocultarControles}) => {
               key={index}
               onPress={() => setSelectedAudioTrack(index)}>
               <RadioButton.Item
-                color="white"
+                // color="white"
                 key={index}
                 label={track.title}
                 value={index}
@@ -353,6 +392,8 @@ export const VideoPlayer = ({navigation, route, ocultarControles}) => {
 
 const styles = StyleSheet.create({
   container: {
+    width: "100%",
+    height: "100%",
     flex: 1,
     backgroundColor: 'black',
   },
@@ -377,6 +418,7 @@ const styles = StyleSheet.create({
     paddingRight: 10,
   },
   buttons: {
+    flex: 1,
     flexDirection: 'row',
     justifyContent: 'space-around',
     marginTop: 10,

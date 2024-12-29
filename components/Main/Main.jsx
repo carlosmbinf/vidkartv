@@ -1,26 +1,29 @@
 //crear elemento react native Main.js
-import React, { useEffect } from 'react';
-import {View, ScrollView, StyleSheet, TouchableOpacity, Dimensions} from 'react-native';
-import {VideoPlayer} from '../video/VideoPlayer';
+import React, { useEffect, useRef, useState } from 'react';
+import { View, ScrollView, StyleSheet, TouchableOpacity, Animated, Touchable, TouchableHighlight } from 'react-native';
+import { VideoPlayer } from '../video/VideoPlayer';
 import {
   Appbar,
   Button,
+  Drawer,
   PaperProvider,
   useTheme,
   Text,
   IconButton,
   Icon,
+  Surface,
+  Portal,
+  Dialog,
+  RadioButton,
+  Searchbar,
+  TextInput,
 } from 'react-native-paper';
-import Drawer from 'react-native-drawer';
-import {createNativeStackNavigator} from '@react-navigation/native-stack';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import MainPelis from './MainPelis';
-import Meteor, {Mongo, withTracker} from '@meteorrn/core';
+import Meteor, { Mongo, withTracker } from '@meteorrn/core';
 import MainSeries from './MainSeries';
 import SeriesDetails from '../series/SeriesDetails';
-import DrawerOptionsAlls from '../drawer/DrawerOptionsAlls';
-
-const {width: screenWidth} = Dimensions.get('window');
-const {height: screenHeight} = Dimensions.get('window');
+import VideoPlayerIOS from '../video/VideoPlayerIOS';
 
 const Stack = createNativeStackNavigator();
 
@@ -28,45 +31,33 @@ const Main = () => {
   const [visible, setVisible] = React.useState(false);
   const [active, setActive] = React.useState('first');
   const [clasificacion, setClasificacion] = React.useState([]);
-  const [drawer, setDrawer] = React.useState(false);
-  const [orientation, setOrientation] = React.useState('Portrait');
+  const [focused, setFocused] = useState('');
+  const scaleValue = useRef(new Animated.Value(1)).current;
+  const scaleValueSecond = useRef(new Animated.Value(1)).current;
+  const scaleValuecerrarSession = useRef(new Animated.Value(1)).current;
+  const [visibleModalReproductorSeries, setVisibleModalReproductorSeries] = React.useState(true);
+  const [visibleModalReproductorPeliculas, setVisibleModalReproductorPeliculas] = React.useState(true);
+  const [checkedSeries, setCheckedSeries] = React.useState();
+  const [reproductorSeries, setReproductorSeries] = React.useState();
+  const [checkedPeliculas, setCheckedPeliculas] = React.useState();
+  const [reproductorPeliculas, setReproductorPeliculas] = React.useState();
+  const [focusedOption, setFocusedOption] = useState(null);
+  const [focusedAction, setFocusedAction] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const searchRef = React.useRef();
+  const handleSearch = (query) => {
+    setSearchQuery(query);
 
-  const handleOrientationChange = () => {
-    const {height, width} = Dimensions.get('window');
-    if (height > width) {
-      setOrientation('Portrait'); // Vertical
-    } else {
-      setOrientation('Landscape'); // Horizontal
-    }
   };
 
-  useEffect(() => {
-    const subscription = Dimensions.addEventListener(
-      'change',
-      handleOrientationChange,
-    );
-
-    // Establecer la orientación inicial
-    handleOrientationChange();
-
-    return () => {
-      subscription?.remove();
-    };
-  }, []);
-
-  const opcionesServicios = [
-    {
-      label: 'Peliculas',
-      url: 'Peliculas',
-      icon: 'movie-filter',
-    },
-    {
-      label: 'Series',
-      url: 'Series',
-      icon: 'movie-filter',
-    },
-  ];
-
+  const hideDialogSeries = () => {
+    setVisibleModalReproductorSeries(false);
+    setReproductorSeries(checkedSeries);
+  };
+  const hideDialogPeliculas = () => {
+    setVisibleModalReproductorPeliculas(false);
+    setReproductorPeliculas(checkedPeliculas);
+  };
   const categorias = [
     'Sci-Fi',
     'Action',
@@ -82,7 +73,7 @@ const Main = () => {
 
   const userName = Meteor.user()
     ? Meteor.user().profile &&
-      Meteor.user().profile.firstName + ' ' + Meteor.user().profile.lastName
+    Meteor.user().profile.firstName + ' ' + Meteor.user().profile.lastName
     : '';
 
   const handleLogout = () => {
@@ -92,7 +83,7 @@ const Main = () => {
   };
 
   useEffect(() => {
-    Meteor.call('getSeriesClasificacion', (err, res) => {
+    active == 'first' && Meteor.call('getSeriesClasificacion', (err, res) => {
       if (err) {
         console.log(err);
       } else {
@@ -101,18 +92,27 @@ const Main = () => {
     });
   }, [active]);
 
-  const drawerStyles = {
-    drawer: {
-      shadowColor: 'black',
-      shadowOpacity: 0,
-      shadowRadius: 3,
-      backgroundColor: 'black',
-    },
-    main: {paddingLeft: 0},
-  };
+  useEffect(() => {
+    Animated.spring(scaleValue, {
+      toValue: focused == 'first' ? 1 : 0.8, // Escala cuando está enfocado
+      friction: 3,
+      useNativeDriver: true,
+    }).start();
+    Animated.spring(scaleValuecerrarSession, {
+      toValue: focused == 'cerrarSession' ? 1 : 0.8, // Escala cuando está enfocado
+      friction: 3,
+      useNativeDriver: true,
+    }).start();
+    Animated.spring(scaleValueSecond, {
+      toValue: focused == 'second' ? 1 : 0.8, // Escala cuando está enfocado
+      friction: 3,
+      useNativeDriver: true,
+    }).start();
+  }, [focused]);
 
   const theme = useTheme({
     ...useTheme(),
+    isV3: true,
     dark: true,
     roundness: 5,
     animation: {
@@ -164,7 +164,9 @@ const Main = () => {
   });
 
   return (
-    <PaperProvider theme={theme}>
+    <PaperProvider
+      theme={theme}
+    >
       <Stack.Navigator initialRouteName="Home">
         <Stack.Screen
           name="Details"
@@ -187,99 +189,152 @@ const Main = () => {
             headerShown: false,
           }}>
           {props => (
-            <>
-              <Drawer
-                // key={orientation}
-                type="overlay"
-                open={drawer}
-                content={
-                  <DrawerOptionsAlls
-                    navigation={props.navigation}
-                    setActive={setActive}
-                    active={active}
-                    opcionesServicios={opcionesServicios}
-                  />
-                }
-                tapToClose={true}
-                // captureGestures="closed"
-                // acceptPanOnDrawer={false}
-                // acceptPan={true}
-                onClose={() => setDrawer(false)}
-                elevation={12}
-                side="left"
-                openDrawerOffset={orientation == 'Portrait' ? 0.4 : 0.6} // 20% gap on the right side of drawer
-                panCloseMask={0.5}
-                closedDrawerOffset={0}
-                styles={drawerStyles}
-                tweenHandler={ratio => ({
-                  main: {opacity: (2 - ratio) / 2},
-                })}>
-                <>
-                  <Appbar.Header
-                    elevated={12}
-                    style={{backgroundColor: 'rgba(20, 20, 20, 0.73)'}}>
-                    <View
-                      style={{
-                        flexDirection: 'row',
-                        // alignItems: 'center',
-                        justifyContent: 'space-between',
-                        width: '100%',
-                        paddingLeft: 10,
-                        paddingRight: 10,
-                      }}>
-                      <IconButton
-                        icon={'format-list-bulleted'}
-                        // mode="outlined"
-                        onPress={() => setDrawer(true)}
-                      />
-
+            <Surface>
+              <Appbar.Header
+                elevated={12}
+              // style={{backgroundColor: 'rgba(20, 20, 20, 0.73)'}}
+              >
+                <View
+                  style={{
+                    flexDirection: 'row-reverse',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    width: '100%',
+                    paddingLeft: 10,
+                    paddingRight: 10,
+                  }}>
+                  <TouchableOpacity
+                    activeOpacity={scaleValuecerrarSession}
+                    focusable={true}
+                    onFocus={() => setFocused('cerrarSession')}
+                    onBlur={() => setFocused('')}
+                    onPress={handleLogout}
+                    style={styles.button}>
+                    <Animated.View
+                      style={[
+                        styles.innerButton,
+                        { transform: [{ scale: scaleValuecerrarSession }], backgroundColor: focused == 'cerrarSession' || active === 'cerrarSession' ? theme.colors.onPrimary : theme.colors.onSecondary },
+                      ]}>
                       <Button
                         icon={'account-off'}
-                        mode="outlined"
-                        onPress={handleLogout}>
-                        Cerrar Sesión
+                        mode="text">
+                        Sign Out
                       </Button>
-                      {/* <Icon source={'home'} isTVSelectable={false} size={25} /> */}
-
-                      {/* <IconButton
-                    icon="menu"
-                    color="white"
-                    size={30}
-                    onPress={() => setDrawer(true)}
-                    style={{position: 'absolute', left: 10, top: 10}}
-                  /> */}
-                      {/* <View style={{flexDirection: 'column'}}> */}
-
-                      {/* <Appbar.Action icon={'home'} disabled isTVSelectable={false} />
+                    </Animated.View>
+                  </TouchableOpacity>
+                  {/* <Icon source={'home'} isTVSelectable={false} size={25} /> */}
+                  <View style={{ flexDirection: 'row' }}>
+                    {/* <Appbar.Action icon={'home'} disabled isTVSelectable={false} /> */}
                     <Text
-                      style={{fontSize: 20}}>{`${userName}`}</Text>
-                  </View> */}
-                    </View>
-                  </Appbar.Header>
-                  <View style={styles.menuLateral}>
-                    <View>
-                      <ScrollView visible={visible} setVisible={setVisible}>
-                        {active === opcionesServicios[1].url
-                          ? clasificacion.map((clasification, index) => (
-                              <MainSeries
-                                {...props}
-                                key={index}
-                                clasificacion={clasification}
-                              />
-                            ))
-                          : categorias.map((categoria, index) => (
-                              <MainPelis
-                                {...props}
-                                key={index}
-                                clasificacion={categoria}
-                              />
-                            ))}
-                      </ScrollView>
-                    </View>
+                      style={{ fontSize: 20 }}>{`Welcome, ${userName}`}</Text>
                   </View>
-                </>
-              </Drawer>
-            </>
+                </View>
+              </Appbar.Header>
+              <View style={styles.menuLateral}>
+                <View
+                  style={{
+                    flex: 0.2,
+                    // backgroundColor: 'rgba(20, 20, 20, 0.73)',
+                  }}>
+                  <Drawer.Section
+                    title="What do you want to see?"
+                    showDivider={false}
+                    style={{
+                      height: '100%',
+                    }}>
+                    <TouchableOpacity
+                      activeOpacity={scaleValue}
+                      focusable={true}
+                      onFocus={() => setFocused('first')}
+                      onBlur={() => setFocused('')}
+                      onPress={() => setActive('first')}
+                      style={styles.button}>
+                      <Animated.View
+                        style={[
+                          styles.innerButton,
+                          { transform: [{ scale: scaleValue }], backgroundColor: focused == 'first' || active === 'first' ? theme.colors.onPrimary : theme.colors.onSecondary },
+                        ]}>
+                        <Text style={styles.buttonText}>Series</Text>
+                      </Animated.View>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      activeOpacity={1}
+                      focusable={true}
+                      onFocus={() => setFocused('second')}
+                      onBlur={() => setFocused('')}
+                      onPress={() => setActive('second')}
+                      style={[styles.button]}>
+                      <Animated.View
+                        style={[
+                          styles.innerButton,
+                          { transform: [{ scale: scaleValueSecond }], backgroundColor: focused == 'second' || active === 'second' ? theme.colors.onPrimary : theme.colors.onSecondary },
+                        ]}>
+                        <Text style={styles.buttonText}>Movies</Text>
+                      </Animated.View>
+                    </TouchableOpacity>
+                  </Drawer.Section>
+                </View>
+                <View style={{ flex: 0.8 }}>
+
+                  <ScrollView visible={visible}
+                  // setVisible={setVisible}
+                  >
+                    <View style={styles.container}>
+                      <TouchableOpacity onPress={() => { searchRef.current.focus() }}>
+
+                        <TextInput
+                          placeholder="Search movies, series, or more..."
+                          ref={searchRef}
+                          style={styles.searchBar}
+                          onChangeText={handleSearch}
+                          value={searchQuery}
+                          mode='outlined'
+                        />
+
+                        {/* <Searchbar
+                      ref={searchRef}
+                      placeholder="Search movies, series, or more..."
+                      onChangeText={handleSearch}
+                      value={searchQuery}
+                      style={styles.searchBar}
+                      inputStyle={styles.inputText}
+                      placeholderTextColor="#b0b0b0"
+                      autoFocus={true} // Permite capturar texto de inmediato
+                      // loading={true}
+
+                      traileringIcon={undefined}
+                      clearButtonMode='never'
+                      // traileringIcon={'magnify'}
+                      right={undefined}
+                      clearIcon={true}
+                      icon="magnify"
+                      mode = "bar"
+                    /> */}
+                      </TouchableOpacity>
+
+                    </View>
+                    {active == 'first'
+                      ? clasificacion.map((clasification, index) => (
+                        <MainSeries
+                          {...props}
+                          key={index}
+                          clasificacion={clasification}
+                          filtro={searchQuery ? searchQuery : null}
+                        />
+                      ))
+                      : categorias.map((categoria, index) => (
+                        <MainPelis
+                          {...props}
+                          key={index}
+                          clasificacion={categoria}
+                          filtro={searchQuery ? searchQuery : null}
+                        />
+                      ))}
+                  </ScrollView>
+                </View>
+              </View>
+            </Surface>
           )}
         </Stack.Screen>
         <Stack.Screen
@@ -289,7 +344,163 @@ const Main = () => {
             navigationBarHidden: true,
             headerShown: false,
           }}>
-          {props => <VideoPlayer {...props} />}
+          {props =>
+            <Surface style={styles.container}>
+              {props.route.params.isSerie ?
+                <Dialog
+                  visible={visibleModalReproductorSeries || !reproductorSeries}
+                  onDismiss={hideDialogSeries}
+                >
+                  <Dialog.Icon icon="alert" />
+                  <Dialog.Title style={styles.title}>
+                    Select a Player to Play Series
+                  </Dialog.Title>
+                  <Dialog.Content>
+                    <TouchableOpacity
+                      activeOpacity={1}
+                      focusable
+                      hasTVPreferredFocus
+                      onPress={() => setCheckedSeries('android')}
+                      onFocus={() => setFocusedOption('android')}
+                      onBlur={() => setFocusedOption(null)}
+                      style={[
+                        styles.optionButton,
+                        {
+                          backgroundColor:
+                            focusedOption === 'android'
+                              ? theme.colors.primaryContainer
+                              : checkedSeries === 'android'
+                                ? theme.colors.secondaryContainer
+                                : undefined,
+                        },
+                      ]}
+                    >
+                      <Text style={styles.optionText}>Player Android</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      activeOpacity={1}
+                      focusable
+                      onPress={() => setCheckedSeries('vlc')}
+                      onFocus={() => setFocusedOption('vlc')}
+                      onBlur={() => setFocusedOption(null)}
+                      style={[
+                        styles.optionButton,
+                        {
+                          backgroundColor:
+                            focusedOption === 'vlc'
+                              ? theme.colors.primaryContainer
+                              : checkedSeries === 'vlc'
+                                ? theme.colors.secondaryContainer
+                                : undefined,
+                        },
+                      ]}
+                    >
+                      <Text style={styles.optionText}>Integrated VLC Player</Text>
+                    </TouchableOpacity>
+                  </Dialog.Content>
+                  <Dialog.Actions>
+                    <TouchableOpacity
+                      onPress={() => hideDialogSeries()}
+                      onFocus={() => setFocusedAction(true)}
+                      onBlur={() => setFocusedAction(false)}
+                      style={[
+                        styles.actionButton,
+                        {
+                          backgroundColor: focusedAction
+                            ? theme.colors.primaryContainer
+                            : theme.colors.secondaryContainer,
+                        },
+                      ]}
+                      activeOpacity={1}
+                    >
+                      <Text style={styles.actionText}>OK</Text>
+                    </TouchableOpacity>
+                  </Dialog.Actions>
+                </Dialog>
+                :
+                <Dialog
+                  visible={visibleModalReproductorPeliculas || !reproductorPeliculas}
+                  onDismiss={hideDialogPeliculas}
+                >
+                  <Dialog.Icon icon="alert" />
+                  <Dialog.Title style={styles.title}>
+                    Select a Player to Play Movies
+                  </Dialog.Title>
+                  <Dialog.Content>
+                    <TouchableOpacity
+                      activeOpacity={1}
+                      focusable
+                      hasTVPreferredFocus
+                      onPress={() => setCheckedPeliculas('android')}
+                      onFocus={() => setFocusedOption('android')}
+                      onBlur={() => setFocusedOption(null)}
+                      style={[
+                        styles.optionButton,
+                        {
+                          backgroundColor:
+                            focusedOption === 'android'
+                              ? theme.colors.primaryContainer
+                              : checkedPeliculas === 'android'
+                                ? theme.colors.secondaryContainer
+                                : undefined,
+                        },
+                      ]}
+                    >
+                      <Text style={styles.optionText}>Player Android</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      activeOpacity={1}
+                      focusable
+                      onPress={() => setCheckedPeliculas('vlc')}
+                      onFocus={() => setFocusedOption('vlc')}
+                      onBlur={() => setFocusedOption(null)}
+                      style={[
+                        styles.optionButton,
+                        {
+                          backgroundColor:
+                            focusedOption === 'vlc'
+                              ? theme.colors.primaryContainer
+                              : checkedPeliculas === 'vlc'
+                                ? theme.colors.secondaryContainer
+                                : undefined,
+                        },
+                      ]}
+                    >
+                      <Text style={styles.optionText}>Integrated VLC Player</Text>
+                    </TouchableOpacity>
+                  </Dialog.Content>
+                  <Dialog.Actions>
+                    <TouchableOpacity
+                      onPress={() => hideDialogPeliculas()}
+                      onFocus={() => setFocusedAction(true)}
+                      onBlur={() => setFocusedAction(false)}
+                      style={[
+                        styles.actionButton,
+                        {
+                          backgroundColor: focusedAction
+                            ? theme.colors.primaryContainer
+                            : theme.colors.secondaryContainer,
+                        },
+                      ]}
+                      activeOpacity={1}
+                    >
+                      <Text style={styles.actionText}>OK</Text>
+                    </TouchableOpacity>
+                  </Dialog.Actions>
+                </Dialog>
+              }
+              {props.route.params.isSerie
+                ? (reproductorSeries != null
+                  && (reproductorSeries === 'vlc'
+                    ? <VideoPlayerIOS {...props} />
+                    : <VideoPlayer {...props} />))
+                : (reproductorPeliculas != null
+                  && (reproductorPeliculas === 'vlc'
+                    ? <VideoPlayerIOS {...props} />
+                    : <VideoPlayer {...props} />))}
+            </Surface>
+
+          }
         </Stack.Screen>
         <Stack.Screen
           name="SerieDetail"
@@ -303,22 +514,83 @@ const Main = () => {
       </Stack.Navigator>
     </PaperProvider>
   );
-};
+}
 
 export default Main;
 
 const styles = StyleSheet.create({
+  searchBar: {
+    minWidth: '70%', // Ajusta según el tamaño de tu pantalla
+    borderRadius: 30,
+    // backgroundColor: '#1e1e1e',
+    elevation: 2,
+    borderWidth: 1,
+    // borderColor: '#2a2a2a',
+  },
+  inputText: {
+    fontSize: 18,
+    color: '#ffffff',
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  optionButton: {
+    padding: 15,
+    borderRadius: 10,
+    marginVertical: 8,
+    alignItems: 'center',
+  },
+  optionText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#fff',
+  },
+  actionButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'center',
+  },
+  actionText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  button: {
+    margin: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  innerButton: {
+    width: "90%",
+    height: 45,
+    borderRadius: 25,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: 'white',
+    fontSize: 18,
+  },
   container: {
     flex: 1,
     // backgroundColor: 'white',
+    // padding: 16,
+    alignItems: 'center',
+    // backgroundColor: '#121212', // Fondo oscuro para TVs
   },
   menuLateral: {
-    backgroundColor: 'rgba(20, 20, 20, 1)',
+    // backgroundColor: 'rgba(20, 20, 20, 1)',
     flexDirection: 'row',
     height: '100%',
     width: '100%',
     // padding: 20,
-    // paddingBottom: 65,
+    paddingBottom: 130,
   },
   logoutButton: {
     marginRight: 10,

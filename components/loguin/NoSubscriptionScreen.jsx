@@ -33,7 +33,7 @@ const NoSubscriptionScreen = ({navigation}) => {
                 mode="contained"
                 onPress={handleLogout}
                 style={styles.button}>
-                Cerrar Sesión
+                Sign Out
               </Button>
             </Card.Content>
           </Card>

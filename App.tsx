@@ -24,7 +24,7 @@ import {
 } from 'react-native/Libraries/NewAppScreen';
 import MyCarousel from './components/components/MyCarousel';
 import {Button, PaperProvider, Text} from 'react-native-paper';
-import {VideoPlayer} from './components/video/VideoPlayer';
+import {VideoPlayer} from './components/video/VideoPlayerViejo';
 import {NavigationContainer} from '@react-navigation/native';
 import Main from './components/Main/Main';
 import Meteor, {Mongo, withTracker} from '@meteorrn/core';
@@ -71,8 +71,11 @@ class MyApp extends React.Component {
             barStyle={'light-content'} //isDarkMode ? 'light-content' : 'dark-content'}
             // backgroundColor={backgroundStyle.backgroundColor}
           />
-          {isReadyVersions && versionApk && versionApk.version != appVersion ? (
-            <UpdateApk apkUrl={versionApk.apkUrl} appVersion={appVersion} />
+          {
+          // isReadyVersions && versionApk && versionApk.version != appVersion 
+          false ? 
+          (
+            <UpdateApk apkUrl={versionApk.apkUrl} />
           ) : isConected ? (
             userId ? (
               //comprobar si tiene acceso, si no, redirigir a Pantalla de No Autorizado

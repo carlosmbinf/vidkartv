@@ -26,8 +26,9 @@ import {
   TemporadasCollection,
 } from '../collections/collections';
 import VideoPlayer from '../video/VideoPlayer';
+import CardInfoSerie from './CardInfoSerie';
 
-const SeriesDetails = ({navigation, route}) => {
+const App = ({navigation, route, temporadas,ready , readyCapitulos, capitulos}) => {
     const {idSerie} = route.params;
 //   var idSerie = 'CKsYcmYGqj55LZKtS';
   const [seasons, setSeasons] = useState([]);
@@ -35,19 +36,22 @@ const SeriesDetails = ({navigation, route}) => {
   const [selectedSeason, setSelectedSeason] = useState(null);
   const [active, setActive] = useState(1);
   const [focusEpisodio, setFocusEpisodio] = useState();
+  const [focusTemporada, setFocusTemporada] = useState();
   const handleLogout = () => {
     // Implementa la lógica de cierre de sesión aquí
     console.log('Cierre de sesión');
     Meteor.logout();
   };
 
-  useEffect(() => {
-    fetchSeasons(idSerie);
-  }, []);
+  const theme = useTheme();
 
   useEffect(() => {
-    selectedSeason && fetchEpisodes(selectedSeason._id);
-  }, [selectedSeason]);
+    ready && fetchSeasons(idSerie);
+  }, [ready]);
+
+  useEffect(() => {
+    readyCapitulos && selectedSeason && fetchEpisodes(selectedSeason._id);
+  }, [selectedSeason,readyCapitulos]);
 
   const userName = Meteor.user()
     ? Meteor.user().profile &&
@@ -56,17 +60,14 @@ const SeriesDetails = ({navigation, route}) => {
 
   const fetchSeasons = async idSerieSeasons => {
     try {
-      console.log('fetchSeasons - idSerieSeasons', idSerieSeasons);
-      let temporadas = await TemporadasCollection.find(
-        {idSerie: idSerieSeasons},
-        {sort: {nombre: 1}},
-      ).fetch();
       if (temporadas != null && temporadas.length > 0) {
         await setSeasons(temporadas);
-        await handleSeasonSelect(temporadas[0]);
         setActive(temporadas[0].numeroTemporada);
+        await handleSeasonSelect(temporadas[0]);
+
       }
-      console.log('temporadas', seasons);
+      
+
     } catch (error) {
       console.error('Error al cargar las temporadas:', error);
     }
@@ -74,15 +75,11 @@ const SeriesDetails = ({navigation, route}) => {
 
   const fetchEpisodes = async seasonId => {
     try {
-      console.log('fetchEpisodes - selectedSeason', seasonId);
-      let capitulos = await CapitulosCollection.find(
-        {idTemporada: seasonId},
-        {fields: {textSubtitle: 0}},
-      ).fetch();
+
+      // let ready = await Meteor.subscribe('capitulos', { idTemporada: seasonId }, { fields: { textSubtitle: 0 }}).ready();
       if (capitulos != null && capitulos.length > 0) {
-        await setEpisodes(capitulos);
+        await setEpisodes(capitulos.filter((capitulo) => capitulo.idTemporada == seasonId).sort((a, b) => a.numeroCapitulo - b.numeroCapitulo));
       }
-      // console.log('capitulos', capitulos);
     } catch (error) {
       console.error('Error al cargar los capítulos:', error);
     }
@@ -94,72 +91,88 @@ const SeriesDetails = ({navigation, route}) => {
   };
 
   const handleEpisodeClick = episode => {
-    console.log('Nombre del capítulo seleccionado:', episode);
     navigation.navigate('Peli', {
-      urlVideo: episode.url,
+      urlVideo: episode.urlHTTPS,
       subtitulo: episode.subtitulo,
+      isSerie: true,
+      _id: episode._id,
     });
   };
 
-  const renderSeason = ({item}) => (
-    <Drawer.Item
-      onfocus={() => console.log('focus')}
-      label={`Temporada ${item.numeroTemporada}`}
-      active={active === item.numeroTemporada}
+  const renderSeason = ({item}) =>
+    <TouchableOpacity
+      onfocus={() => {setFocusTemporada(item.numeroTemporada)}}
+      style={{
+        padding: 15,
+        margin: 5,
+        marginLeft: "5%",
+        backgroundColor: active == item._id ? theme.colors.onPrimary : (focusTemporada == item._id ? theme.colors.onPrimary : theme.colors.secondaryContainer),
+        borderRadius: 30, 
+        width: "80%"
+      }}
+      activeOpacity={focusTemporada == item.numeroTemporada ? 1 : 0.7}
       onPress={() => {
-        setActive(item.numeroTemporada);
+        setActive(item._id);
         handleSeasonSelect(item);
       }}
-    />
-  );
+    >
+      <Text>{`Temporada ${item.numeroTemporada}`}</Text>
+    </TouchableOpacity>
 
-  const renderEpisode = ({item}) => (
-    <TouchableOpacity
+
+  const renderEpisode = ({item}) => {
+    return <TouchableOpacity
       style={{
+        // width: "30%",
         borderRadius: 10,
-        opacity: focusEpisodio === item.nombre ? 1 : 0.7,
+        opacity: (focusEpisodio && focusEpisodio._id) === item._id ? 1 : 0.5,
       }}
-      onFocus={() => setFocusEpisodio(item.nombre)}
-      onBlur={() => setFocusEpisodio(null)}
+      onFocus={() => setFocusEpisodio(item)}
+      // onBlur={() => setFocusEpisodio(null)}
       onPress={() => handleEpisodeClick(item)}>
       <Surface
         style={{
+          width: 200,
+          // height: 150,
           padding: 0,
           margin: 10,
           borderRadius: 10,
-          backgroundColor: 'rgba(20, 20, 20, 1)',
+          // backgroundColor: 'rgba(20, 20, 20, 1)',
         }}>
         {/* se le puso false para que no mostrara las imagenes */}
-        {item.urlBackground && false ? (
+        {
+          
+        true ? (
           <ImageBackground
             source={{
-              uri: item.urlBackground || 'https://via.placeholder.com/400x200',
+              uri: item.urlBackgroundHTTPS || 'https://upload.wikimedia.org/wikipedia/commons/1/14/No_Image_Available.jpg',
             }}
             style={styles.image}
             imageStyle={{borderRadius: 10}}>
             <View style={styles.overlay}>
               <Text style={[styles.title2, {color: theme.colors.onSurface}]}>
-                {item.nombre}
+                Capitulo {item.capitulo}
               </Text>
-              <Text
+              {/* <Text
                 style={[styles.description, {color: theme.colors.onSurface}]}>
-                {item.descripcion}
-              </Text>
-              <Text style={[styles.views, {color: theme.colors.onSurface}]}>
-                Vistas: {item.vistas}
-              </Text>
+                Description: {item.descripcion}
+              </Text> */}
+              {/* <Text style={[styles.views, {color: theme.colors.onSurface}]}>
+                Vistas: {item.vistas} Extension: {item.extension}
+              </Text> */}
             </View>
           </ImageBackground>
         ) : (
           <View style={styles.overlay}>
             <Text style={[styles.title2]}>{item.nombre}</Text>
-            <Text style={[styles.description]}>{item.descripcion}</Text>
+            <Text style={[styles.description]}>Description: {item.descripcion}</Text>
             <Text style={[styles.views]}>Vistas: {item.vistas}</Text>
           </View>
         )}
       </Surface>
     </TouchableOpacity>
-  );
+  };
+    
 
   return (
     <>
@@ -175,33 +188,40 @@ const SeriesDetails = ({navigation, route}) => {
             paddingLeft: 10,
             paddingRight: 10,
           }}>
-          <Button icon={'account-off'} mode="outlined" onPress={handleLogout}>
-            Cerrar Sesión
-          </Button>
+          {/* <Text>
+            Sign Out
+          </Text> */}
           {/* <Icon source={'home'} isTVSelectable={false} size={25} /> */}
           <View style={{flexDirection: 'row'}}>
             {/* <Appbar.Action icon={'home'} disabled isTVSelectable={false} /> */}
-            <Text style={{fontSize: 20}}>{`Bienvenido, ${userName}`}</Text>
+            <Text style={{fontSize: 20}}>{`Welcome, ${userName}`}</Text>
           </View>
         </View>
       </Appbar.Header>
-      <View style={styles.menuLateral}>
+      <Surface style={styles.menuLateral}>
         <View
           style={{
             flex: 0.3,
-            backgroundColor: 'rgba(20, 20, 20, 0.73)',
+            // backgroundColor: 'rgba(20, 20, 20, 0.73)',
           }}>
           <Drawer.Section
-            title="Selecciona una Temporada:"
+            title="Select 1 Season:"
             showDivider={false}
             style={{
               height: '100%',
+              width: 200,
             }}>
+
             <FlatList
+              key={item => item._id}
               data={seasons}
               renderItem={renderSeason}
-              keyExtractor={item => item._id}
+              // keyExtractor={item => item._id}
+              
               style={styles.list}
+              decelerationRate={0.9}
+                  bouncesZoom={true}
+                  bounces={true}
             />
             {/* <Drawer.Item
               // background={'white'}
@@ -214,38 +234,43 @@ const SeriesDetails = ({navigation, route}) => {
         </View>
         <View style={{flex: 0.7, paddingBottom: 70, marginBottom:10}}>
           <View style={styles.container}>
-            {/* <View
+            <View
                 style={{
                   flexDirection: 'row',
                   justifyContent: 'center',
                   width: '100%',
                 }}>
-                <View
-                  style={{height: 200, width: 400, backgroundColor: 'black'}}>
-                  <VideoPlayer
+                <View>
+                  <CardInfoSerie item={focusEpisodio} />
+                  {/* {focusEpisodio && <VideoPlayer
                     ocultarControles={true}
                     navigation={navigation}
                     route={{
                       params: {
+                        _id: focusEpisodio && focusEpisodio._id,
+                        isSerie: true,
                         urlVideo: focusEpisodio && focusEpisodio.url,
                         subtitulo: focusEpisodio && focusEpisodio.subtitulo,
                       },
                     }}
                     //   urlVideo={focusEpisodio.url}
                     //   subtitulo={focusEpisodio.subtitulo}
-                  />
+                  />} */}
                 </View>
-              </View> */}
+              </View>
 
             {selectedSeason && (
               <>
-                <Text style={styles.title}>
+                {/* <Text style={styles.title}>
                   Capítulos de la Temporada {selectedSeason.numeroTemporada}
-                </Text>
+                </Text> */}
                 <FlatList
+                  // numColumns={2}
+                  key={item => item._id}
                   data={episodes}
                   renderItem={renderEpisode}
-                  keyExtractor={item => item._id}
+                  horizontal={true}
+                  // keyExtractor={item => item._id}
                   style={styles.list}
                   decelerationRate={0.2}
                   bouncesZoom={true}
@@ -256,15 +281,73 @@ const SeriesDetails = ({navigation, route}) => {
             )}
           </View>
         </View>
-      </View>
+      </Surface>
     </>
   );
 };
 
+const SeriesDetails = withTracker(({route,navigation, clasificacion, filtro}) => {
+  const {idSerie} = route.params;
+    const ready = Meteor.subscribe('capitulos', {idSerie: idSerie}).ready();
+    const temporadas = TemporadasCollection.find(
+      {idSerie: idSerie},
+      {sort: {nombre: 1}},
+    ).fetch();
+
+
+  // Extraer todos los IDs de las temporadas
+  let idTemporadas = temporadas.map((temporada) => temporada._id);
+
+  // Usar `$in` para suscribirse a múltiples IDs de temporadas
+  const readyCapitulos = Meteor.subscribe(
+    'capitulos',
+    { idTemporada: { $in: idTemporadas } },
+    {
+      fields: {
+        nombre: 1,
+        // url: 1, urlBackground: 1,
+        urlHTTPS: 1, urlBackgroundHTTPS: 1,  descripcion: 1, subtitulo: 1, idTemporada: 1, capitulo: 1, extension: 1, mostrar: 1, createdAt: 1, vistas: 1, },
+    },
+  ).ready();
+  // "_id" : "C6yBQ2zRbBBQhizuD",
+  //   "nombre" : "Lo que se avecina S05E01",
+  //   "url" : "http://www.vidkar.com:3005/Series/Espanol/Lo%20que%20se%20avecina/LQSA%2015/LQSA%2015x1.mp4",
+  //   "urlBackground" : null,
+  //   "descripcion" : "Lo que se avecina",
+  //   "subtitulo" : null,
+  //   "idTemporada" : "KfAWZsKYANxDQAB2M",
+  //   "capitulo" : 1,
+  //   "extension" : "mp4",
+  //   "urlHTTPS" : "https://www.vidkar.com:3006/Series/Espanol/Lo%20que%20se%20avecina/LQSA%2015/LQSA%2015x1.mp4",
+  //   "urlBackgroundHTTPS" : null,
+  //   "urlTrailer" : "",
+  //   "mostrar" : true,
+  //   "createdAt" : ISODate("2024-12-28T18:35:01.267+0000"),
+  //   "vistas" : 0,
+  //   "textSubtitle" : ""
+  const capitulos = readyCapitulos && CapitulosCollection.find(
+    {idTemporada:  { $in: idTemporadas }},
+    {
+      fields: { nombre: 1, 
+        // url: 1, urlBackground: 1,
+        urlHTTPS: 1, urlBackgroundHTTPS: 1,  descripcion: 1, subtitulo: 1, idTemporada: 1, capitulo: 1, extension: 1, mostrar: 1, createdAt: 1, vistas: 1, },
+    sort: {capitulo: 1}},
+  ).fetch();
+  return {
+    navigation,
+    route,
+    ready: ready,
+    clasificacion,
+    temporadas,
+    readyCapitulos,
+    capitulos
+  };
+})(App);
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'rgb(20, 20, 20)',
+    // backgroundColor: 'rgb(20, 20, 20)',
     padding: 20,
   },
   title: {
@@ -281,7 +364,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(20, 20, 20, 0.73)',
   },
   menuLateral: {
-    backgroundColor: 'rgba(20, 20, 20, 1)',
+    // backgroundColor: 'rgba(20, 20, 20, 1)',
     flexDirection: 'row',
     height: '100%',
     width: '100%',
@@ -289,7 +372,7 @@ const styles = StyleSheet.create({
   },
   image: {
     width: '100%',
-    height: 200,
+    height: 150,
     justifyContent: 'flex-end',
   },
   overlay: {
@@ -300,11 +383,11 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 10,
   },
   title2: {
-    fontSize: 20,
+    // fontSize: 20,
     fontWeight: 'bold',
   },
   description: {
-    fontSize: 16,
+    // fontSize: 16,
     marginVertical: 5,
   },
   views: {
