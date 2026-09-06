@@ -1,0 +1,73 @@
+workflows:
+  android_tv_aab:
+    name: VIDKAR Android TV (AAB)
+
+    environment:
+      android_signing:
+        - keystore_reference
+      groups:
+        - vidkar
+      node: 22
+      java: 17
+
+    cache:
+      cache_paths:
+        - node_modules
+        - ~/.npm
+        - ~/.gradle/caches
+        - ~/.gradle/wrapper
+
+    scripts:
+      - name: Install dependencies
+        script: |
+          npm install --legacy-peer-deps
+
+      - name: Clean generated Android project
+        script: |
+          rm -rf android
+
+      - name: Expo prebuild Android
+        script: |
+          npx expo prebuild --platform android --no-install
+
+      - name: Set Android version
+        script: |
+          set -euo pipefail
+          BUILD_NUMBER="${PROJECT_BUILD_NUMBER:-0}"
+          VERSION_CODE="${APP_VERSION_CODE:-${CM_APP_VERSION_CODE:-$((532 + BUILD_NUMBER))}}"
+          case "$VERSION_CODE" in
+            ''|*[!0-9]*) echo "APP_VERSION_CODE/CM_APP_VERSION_CODE debe ser numérico" >&2; exit 1 ;;
+          esac
+          VERSION_NAME="4.0.$VERSION_CODE"
+          export VERSION_CODE VERSION_NAME
+          echo "Build number: $BUILD_NUMBER"
+          echo "Version code: $VERSION_CODE"
+          echo "Version name: $VERSION_NAME"
+          perl -pi -e "s/versionCode\\s+\\d+/versionCode $VERSION_CODE/g" android/app/build.gradle
+          perl -pi -e "s/versionName\\s+\"[^\"]+\"/versionName \"$VERSION_NAME\"/g" android/app/build.gradle
+
+      - name: Validate Android TV configuration
+        script: |
+          chmod +x scripts/validate-android-tv-build.sh
+          scripts/validate-android-tv-build.sh
+
+      - name: Lint
+        script: |
+          npm run lint
+
+      - name: Typecheck
+        script: |
+          npm run typecheck
+
+      - name: Build signed AAB
+        script: |
+          cd android
+          chmod +x gradlew
+          ./gradlew bundleRelease --no-daemon
+
+      - name: Validate signed AAB
+        script: |
+          scripts/validate-android-tv-build.sh android/app/build/outputs/bundle/release/app-release.aab
+
+    artifacts:
+      - android/app/build/outputs/**/*.aab

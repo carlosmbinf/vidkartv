@@ -1,79 +1,56 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# VIDKAR TV
 
-# Getting Started
+Aplicación independiente para Android TV basada en Expo. Reutiliza la cuenta, los contratos Meteor y el streaming HLS de VIDKAR, con una interfaz optimizada para control remoto/D-pad.
 
->**Note**: Make sure you have completed the [React Native - Environment Setup](https://reactnative.dev/docs/environment-setup) instructions till "Creating a new application" step, before proceeding.
+## Requisitos
 
-## Step 1: Start the Metro Server
+- Node.js compatible con Expo SDK 54.
+- Android Studio, SDK Android y un emulador o dispositivo Android TV.
+- Development build o binario nativo: Expo Go no incluye VLC.
 
-First, you will need to start **Metro**, the JavaScript _bundler_ that ships _with_ React Native.
+## Configuración
 
-To start Metro, run the following command from the _root_ of your React Native project:
+Copia `.env.example` como `.env` y ajusta únicamente los valores del entorno:
 
-```bash
-# using npm
-npm start
+- `EXPO_PUBLIC_METEOR_URL`: WebSocket de Meteor.
+- `EXPO_PUBLIC_HLS_SERVER_URL`: origen del servidor HLS.
+- `EXPO_PUBLIC_EAS_PROJECT_ID`: proyecto EAS necesario para tokens de notificaciones push.
 
-# OR using Yarn
-yarn start
-```
+No incluyas credenciales, tokens ni valores de producción en el repositorio.
 
-## Step 2: Start your Application
+## Desarrollo
 
-Let Metro Bundler run in its _own_ terminal. Open a _new_ terminal from the _root_ of your React Native project. Run the following command to start your _Android_ or _iOS_ app:
+Instala las dependencias desde esta carpeta y genera el proyecto nativo con `expo prebuild`. Después, usa el script `android` para instalar la development build en un emulador/dispositivo TV.
 
-### For Android
+Los scripts disponibles son `start`, `android`, `lint`, `typecheck`, `prebuild` y `build`.
 
-```bash
-# using npm
-npm run android
+## AAB Android TV en Codemagic
 
-# OR using Yarn
-yarn android
-```
+El workflow `android_tv_aab` solo genera y entrega `app-release.aab` como artefacto; no contiene publicación automática en Google Play. En Codemagic, configura el keystore compartido mediante `keystore_reference` y las variables protegidas `CM_KEYSTORE_PASSWORD`, `CM_KEY_ALIAS` y `CM_KEY_PASSWORD`. `CM_KEYSTORE_PATH` es opcional si la ruta montada no es `/vidkar-android/my-release.jks`.
 
-### For iOS
+El versionado usa `4.0.$VERSION_CODE`, donde `VERSION_CODE = 532 + PROJECT_BUILD_NUMBER`. Para una ejecución manual excepcional se puede definir `APP_VERSION_CODE` (o `CM_APP_VERSION_CODE`) y evitar una colisión previamente detectada.
 
-```bash
-# using npm
-npm run ios
+Tras descargar el AAB, súbelo manualmente a una pista dedicada de Google Play configurada exclusivamente para Android TV. No se publica desde este repositorio ni desde Codemagic.
 
-# OR using Yarn
-yarn ios
-```
+## Funcionalidad
 
-If everything is set up _correctly_, you should see your new app running in your _Android Emulator_ or _iOS Simulator_ shortly provided you have set up your emulator/simulator correctly.
+- Login compartido con Android/iOS mediante `@meteorrn/core`.
+- Catálogo `pelis` con gate `subscipcionPelis`, búsqueda, géneros y detalle.
+- Reproducción VLC sobre HLS por sesión, polling, cancelación y reintento.
+- Controles grandes para reproducir/pausar, saltos de 10 segundos y ocultación de controles.
+- Avance por película en `SecureStore` y diálogo para continuar viendo.
+- Subtítulos VTT desde el contrato `/getsubtitle`.
+- Registro de push mediante `push.registerToken`.
+- Launcher Android TV exclusivo con `LEANBACK_LAUNCHER`, feature Leanback requerida, touchscreen opcional y banner TV.
 
-This is one way to run your app — you can also run it directly from within Android Studio and Xcode respectively.
+## Rutas HLS utilizadas
 
-## Step 3: Modifying your App
+La app conserva el contrato existente:
 
-Now that you have successfully run the app, let's modify it.
+- `POST /peliculas/hls/:idPeli/prepare`
+- `GET /peliculas/hls/:idPeli/status`
+- `POST /peliculas/hls/:idPeli/:sessionId/cancel`
+- `GET /peliculas/hls/:idPeli/:sessionId/index.m3u8`
+- `GET /peliculas/hls/:idPeli/:sessionId/segment_*.ts`
 
-1. Open `App.tsx` in your text editor of choice and edit some lines.
-2. For **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Developer Menu** (<kbd>Ctrl</kbd> + <kbd>M</kbd> (on Window and Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (on macOS)) to see your changes!
-
-   For **iOS**: Hit <kbd>Cmd ⌘</kbd> + <kbd>R</kbd> in your iOS Simulator to reload the app and see your changes!
-
-## Congratulations! :tada:
-
-You've successfully run and modified your React Native App. :partying_face:
-
-### Now what?
-
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [Introduction to React Native](https://reactnative.dev/docs/getting-started).
-
-# Troubleshooting
-
-If you can't get this to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
-
-# Learn More
-
-To learn more about React Native, take a look at the following resources:
-
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+La autorización de usuario y suscripción sigue siendo responsabilidad de Meteor y del servidor HLS; ocultar controles en la interfaz no concede acceso.
