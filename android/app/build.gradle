@@ -62,30 +62,6 @@ react {
     /* Autolinking */
     autolinkLibrariesWithApp()
 }
-// @generated begin withVidkarTvVlc - expo prebuild (DO NOT MODIFY) sync-e97b6c4c506fb401f046165fac91f3f4f78dc0d6
-tasks.whenTaskAdded((tas -> {
-        if (tas.name.contains("merge") && tas.name.contains("NativeLibs")) {
-                tasks.named(tas.name) { it
-                        doFirst {
-                                def reactAndroidDir = it.externalLibNativeLibs
-                                                .getFiles()
-                                                .stream()
-                                                .filter(file -> file.toString().contains("jetified-react-android"))
-                                                .findAny()
-                                                .orElse(null)
-                                if (reactAndroidDir != null) {
-                                        java.nio.file.Files.walk(reactAndroidDir.toPath()).forEach(file -> {
-                                                if (file.toString().contains("libc++_shared.so")) {
-                                                        java.nio.file.Files.deleteIfExists(file)
-                                                }
-                                        })
-                                }
-                        }
-                }
-        }
-}))
-// @generated end withVidkarTvVlc
-
 /**
  * Set this to true in release builds to optimize the app using [R8](https://developer.android.com/topic/performance/app-optimization/enable-app-optimization).
  */
@@ -115,8 +91,8 @@ android {
         applicationId 'com.vidkar'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1125
-        versionName "2.0.1125"
+        versionCode 1
+        versionName "1.0.0"
 
         buildConfigField "String", "REACT_NATIVE_RELEASE_LEVEL", "\"${findProperty('reactNativeReleaseLevel') ?: 'stable'}\""
     }
