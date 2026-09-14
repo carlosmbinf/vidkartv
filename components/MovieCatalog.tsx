@@ -14,6 +14,7 @@ import { MovieCard } from "./MovieCard";
 import { SeriesCard } from "./SeriesCard";
 import { TVFocusButton } from "./TVFocusButton";
 import { TVDetailModal } from "./TVDetailModal";
+import CourseCatalog from "./CourseCatalog";
 import { PelisCollection, SeriesCollection } from "./collections";
 import { Meteor } from "../services/meteor/client";
 import { useCurrentSession } from "../services/meteor/session";
@@ -53,7 +54,7 @@ export default function MovieCatalog() {
   const canAccess = currentUser?.subscipcionPelis === true;
 
   // Pestaña activa: "movies" | "series"
-  const [activeTab, setActiveTab] = React.useState<TVCatalogTab>("movies");
+  const [activeTab, setActiveTab] = React.useState<TVCatalogTab>("courses");
   const [searchQuery, setSearchQuery] = React.useState("");
   const [selectedGenre, setSelectedGenre] = React.useState(ALL_GENRES);
 
@@ -71,6 +72,9 @@ export default function MovieCatalog() {
   );
 
   const { loadingMovies, movies } = Meteor.useTracker(() => {
+    if (!canAccess) {
+      return { loadingMovies: false, movies: [] as Movie[] };
+    }
     if (!Meteor.status().connected) {
       return {
         loadingMovies: true,
@@ -86,7 +90,7 @@ export default function MovieCatalog() {
       loadingMovies: !handle.ready(),
       movies: PelisCollection.find({}, { sort: { vistas: -1, nombrePeli: 1 } }).fetch() as Movie[],
     };
-  });
+  }, [canAccess, movieSelector, searchQuery, selectedGenre]);
 
   const visibleMovies = React.useMemo(
     () =>
@@ -100,6 +104,9 @@ export default function MovieCatalog() {
 
   // 2. Suscripción a Series
   const { loadingSeries, seriesList } = Meteor.useTracker(() => {
+    if (!canAccess) {
+      return { loadingSeries: false, seriesList: [] as Series[] };
+    }
     if (!Meteor.status().connected) {
       return {
         loadingSeries: true,
@@ -111,7 +118,7 @@ export default function MovieCatalog() {
       loadingSeries: !handle.ready(),
       seriesList: SeriesCollection.find({}, { sort: { nombre: 1 } }).fetch() as Series[],
     };
-  });
+  }, [canAccess]);
 
   const visibleSeries = React.useMemo(() => {
     const seen = new Set<string>();
@@ -230,8 +237,8 @@ export default function MovieCatalog() {
   React.useEffect(() => {
     if (!userReady) return;
     if (!currentUser) router.replace("/(auth)/login");
-    else if (!canAccess) router.replace("/(app)/subscription");
-  }, [canAccess, currentUser, router, userReady]);
+    else if (!canAccess && activeTab !== "courses") setActiveTab("courses");
+  }, [activeTab, canAccess, currentUser, router, userReady]);
 
   // Manejadores de reproducción
   const handlePlayMovie = React.useCallback(
@@ -283,6 +290,25 @@ export default function MovieCatalog() {
     );
   }
 
+  if (!canAccess || activeTab === "courses") {
+    return (
+      <View style={styles.screen}>
+        <TVNavHeader
+          activeTab={activeTab}
+          hasMovieSubscription={canAccess}
+          onLogout={handleLogout}
+          onSearchChange={setSearchQuery}
+          onSelectTab={(tab) => {
+            if (tab === "courses" || canAccess) setActiveTab(tab);
+          }}
+          searchQuery={searchQuery}
+          username={currentUser?.username || "Usuario"}
+        />
+        <CourseCatalog query={searchQuery} onQueryChange={setSearchQuery} />
+      </View>
+    );
+  }
+
   const isLoading = activeTab === "movies" ? loadingMovies : loadingSeries;
   const currentRows = activeTab === "movies" ? movieRows : seriesRows;
 
@@ -291,10 +317,12 @@ export default function MovieCatalog() {
       {/* Barra de navegación superior TV */}
       <TVNavHeader
         activeTab={activeTab}
+        hasMovieSubscription={canAccess}
         onSelectTab={(tab) => {
           setActiveTab(tab);
           setSelectedGenre(ALL_GENRES);
           setSpotlightItem(null);
+          setSearchQuery("");
         }}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}

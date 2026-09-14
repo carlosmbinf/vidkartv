@@ -43,7 +43,7 @@ export default function LoginScreen() {
     <View style={styles.screen}>
       <View style={styles.brand}>
         <Text style={styles.logo}>VIDKAR</Text>
-        <Text style={styles.kicker}>TU CINE, EN PANTALLA GRANDE</Text>
+        <Text style={styles.kicker}>VIDKAR EN PANTALLA GRANDE</Text>
       </View>
       <View style={styles.card}>
         <Text style={styles.title}>Inicia sesión</Text>

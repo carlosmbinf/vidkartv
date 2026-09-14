@@ -17,7 +17,7 @@ import { VLCPlayer } from "./VLCPlayer";
 import { addMovieView, getMovie } from "../services/movies";
 import { addChapterView, prepareChapterPlayback } from "../services/series";
 import { getHlsServerUrl, getMeteorUrl, Meteor } from "../services/meteor/client";
-import { getHttpOriginFromMeteorUrl } from "../services/images";
+import { useCurrentSession } from "../services/meteor/session";
 import type { Movie } from "../types/movie";
 import type { SeriesChapter, Series, SeriesSeason } from "../types/series";
 
@@ -47,6 +47,22 @@ const SUBTITLE_SIZE_OPTIONS = Object.freeze([
   { id: DEFAULT_SUBTITLE_SIZE_ID, label: "Medianos", relativeFontSize: 14, textScale: 82 },
   { id: "lg", label: "Grandes", relativeFontSize: 18, textScale: 100 },
 ]);
+const SUBTITLE_FIELD_CANDIDATES = [
+  "subtitulo",
+  "subtitle",
+  "subtitleUri",
+  "subtitleUrl",
+  "urlSubtitle",
+  "urlSubtitulo",
+  "srt",
+  "srtUrl",
+  "vtt",
+  "vttUrl",
+  "captions",
+  "subtitles",
+  "subtitleTracks",
+];
+const MEDIA_URL_KEYS = ["uri", "url", "src", "path", "file", "location", "link"];
 
 type TextTrack = { id: number; name?: string };
 type Playback = { currentTime: number; duration: number };
@@ -77,6 +93,62 @@ const formatTime = (milliseconds: number) => {
 
 const joinUrl = (base: string, path: string) =>
   `${base.replace(/\/$/, "")}${path.startsWith("/") ? path : `/${path}`}`;
+
+const getHttpOriginFromMeteorUrl = (value: string) => {
+  try {
+    const parsedUrl = new URL(value);
+    if (parsedUrl.hostname === "www.vidkar.com") return "https://www.vidkar.com";
+    return `${parsedUrl.protocol === "wss:" ? "https:" : "http:"}//${parsedUrl.host}`;
+  } catch {
+    return "https://www.vidkar.com";
+  }
+};
+
+const isAbsoluteMediaUrl = (value: unknown) =>
+  typeof value === "string" && /^(https?:|file:|content:|asset:|ms-appx:|ms-appdata:)/i.test(value.trim());
+
+const normalizeMediaUrl = (value: unknown, mediaOrigin: string) => {
+  if (typeof value !== "string" || !value.trim()) return null;
+  const trimmedValue = value.trim();
+  if (isAbsoluteMediaUrl(trimmedValue)) return trimmedValue;
+  if (trimmedValue.startsWith("/")) return `${mediaOrigin}${trimmedValue}`;
+  return `${mediaOrigin}/${trimmedValue.replace(/^\.?\//, "")}`;
+};
+
+const extractCandidateString = (value: unknown, depth = 0): string | null => {
+  if (depth > 4 || value == null) return null;
+  if (typeof value === "string" && value.trim()) return value.trim();
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const candidate = extractCandidateString(item, depth + 1);
+      if (candidate) return candidate;
+    }
+    return null;
+  }
+  if (typeof value === "object") {
+    for (const key of MEDIA_URL_KEYS) {
+      const candidate = extractCandidateString((value as Record<string, unknown>)[key], depth + 1);
+      if (candidate) return candidate;
+    }
+    for (const nestedValue of Object.values(value)) {
+      const candidate = extractCandidateString(nestedValue, depth + 1);
+      if (candidate) return candidate;
+    }
+  }
+  return null;
+};
+
+const resolveMovieSubtitleUri = (movie: Movie | null, mediaOrigin: string) => {
+  if (movie?._id && (movie.textSubtitle || movie.subtitulo)) {
+    return `${mediaOrigin}/getsubtitle?idPeli=${encodeURIComponent(movie._id)}`;
+  }
+  const source = movie as (Movie & Record<string, unknown>) | null;
+  for (const field of SUBTITLE_FIELD_CANDIDATES) {
+    const candidate = normalizeMediaUrl(extractCandidateString(source?.[field]), mediaOrigin);
+    if (candidate) return candidate;
+  }
+  return null;
+};
 
 async function readProgress(cacheKey: string, id: string) {
   try {
@@ -131,7 +203,19 @@ export default function TVPlayer(props: TVPlayerProps) {
   const cacheKey = playbackType === "series" ? SERIES_CACHE_KEY : MOVIE_CACHE_KEY;
 
   const user = Meteor.useTracker(() => Meteor.user?.());
+  const { user: sessionUser, userReady } = useCurrentSession();
   const { width } = useWindowDimensions();
+
+  React.useEffect(() => {
+    if (!userReady) return;
+    if (!sessionUser) {
+      router.replace("/(auth)/login");
+      return;
+    }
+    if (sessionUser.subscipcionPelis !== true) {
+      router.replace("/(app)/home");
+    }
+  }, [router, sessionUser, userReady]);
 
   // Estados de datos
   const [movie, setMovie] = React.useState<Movie | null>(null);
@@ -190,19 +274,24 @@ export default function TVPlayer(props: TVPlayerProps) {
 
   // Subtítulos
   const subtitleUri = React.useMemo(() => {
-    const hlsOrigin = getHlsServerUrl();
-    const mediaOrigin = getHttpOriginFromMeteorUrl(getMeteorUrl());
+    const hlsOrigin = getHlsServerUrl() || getHttpOriginFromMeteorUrl(getMeteorUrl());
     if (playbackType === "series") {
       return mediaId ? joinUrl(hlsOrigin, `/getsubtitleSeries?idCapitulo=${encodeURIComponent(mediaId)}`) : undefined;
     }
-    return mediaId ? `${mediaOrigin}/getsubtitle?idPeli=${encodeURIComponent(mediaId)}` : undefined;
-  }, [mediaId, playbackType]);
+    return resolveMovieSubtitleUri(movie, hlsOrigin) || undefined;
+  }, [mediaId, movie, playbackType]);
 
   const availableTracks = Array.isArray(videoInfo?.textTracks)
     ? videoInfo.textTracks.filter((track) => typeof track?.id === "number")
     : [];
   const selectableTracks = availableTracks.filter((track) => track.id !== SUBTITLE_DISABLE_TRACK_ID);
   const hasSubtitle = Boolean(subtitleUri || selectableTracks.length);
+
+  React.useEffect(() => {
+    if (subtitleUri || !selectableTracks.length) return;
+    setExternalSubtitleEnabled(false);
+    setSelectedTextTrack((current) => current ?? selectableTracks[0].id);
+  }, [selectableTracks, subtitleUri]);
 
   const subtitleSize =
     SUBTITLE_SIZE_OPTIONS.find((option) => option.id === subtitleSizeId) || SUBTITLE_SIZE_OPTIONS[1];
@@ -279,6 +368,9 @@ export default function TVPlayer(props: TVPlayerProps) {
 
   // Carga de metadatos del contenido
   React.useEffect(() => {
+    if (!userReady || !sessionUser || sessionUser.subscipcionPelis !== true) {
+      return undefined;
+    }
     if (!mediaId) {
       setLoading(false);
       setLoadError("No se recibió contenido válido para reproducir.");
@@ -299,6 +391,10 @@ export default function TVPlayer(props: TVPlayerProps) {
     setIsPlaying(false);
     setPlayerError(null);
     setControlsVisible(true);
+    setVideoInfo(null);
+    setSelectedTextTrack(undefined);
+    setExternalSubtitleEnabled(true);
+    setSubtitleDialogVisible(false);
     viewsRegisteredRef.current = false;
 
     if (playbackType === "series") {
@@ -340,7 +436,7 @@ export default function TVPlayer(props: TVPlayerProps) {
     return () => {
       cancelled = true;
     };
-  }, [mediaId, playbackType]);
+  }, [mediaId, playbackType, sessionUser, userReady]);
 
   // Lectura de progreso guardado
   React.useEffect(() => {
@@ -372,8 +468,11 @@ export default function TVPlayer(props: TVPlayerProps) {
     const keySub = DeviceEventEmitter.addListener("onHWKeyEvent", (event: HardwareKeyEvent) => {
       if (event.eventKeyAction !== undefined && event.eventKeyAction !== 0) return;
       const type = event?.eventType || "";
-      if (["up", "down", "select", "left", "right"].includes(type)) {
+      if (["up", "down", "select", "left", "right", "playPause", "play", "pause"].includes(type)) {
         showControls();
+      }
+      if (type === "playPause" || type === "play" || type === "pause") {
+        setPaused((current) => (type === "play" ? false : type === "pause" ? true : !current));
       }
     });
 
@@ -385,7 +484,7 @@ export default function TVPlayer(props: TVPlayerProps) {
 
   // Sesión HLS: prepare, status polling y cancel
   React.useEffect(() => {
-    if (!resumeReady || resume || !mediaId) return undefined;
+    if (!userReady || !sessionUser || sessionUser.subscipcionPelis !== true || !resumeReady || resume || !mediaId) return undefined;
 
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout> | undefined;
@@ -461,7 +560,7 @@ export default function TVPlayer(props: TVPlayerProps) {
       fetch(cancelUrl, { method: "POST", keepalive: true }).catch(() => null);
       if (cancelUrlRef.current === cancelUrl) cancelUrlRef.current = null;
     };
-  }, [mediaId, playbackType, resume, resumeReady, startAt, streamReload]);
+  }, [mediaId, playbackType, resume, resumeReady, sessionUser, startAt, streamReload, userReady]);
 
   // Watchdog de timeout
   React.useEffect(() => {
@@ -571,6 +670,10 @@ export default function TVPlayer(props: TVPlayerProps) {
     },
     [currentTime, playlistUrl, subtitleSizeId]
   );
+
+  if (!userReady || !sessionUser || sessionUser.subscipcionPelis !== true) {
+    return null;
+  }
 
   if (!user) {
     return (
@@ -766,6 +869,15 @@ export default function TVPlayer(props: TVPlayerProps) {
               </View>
             </LinearGradient>
           </View>
+        ) : null}
+
+        {!controlsVisible && source && !streamError && !playerError ? (
+          <TVFocusButton
+            label={paused ? "▶  Mostrar controles" : "Ⅱ  Mostrar controles"}
+            onPress={showControls}
+            style={styles.revealControlsButton}
+            accessibilityLabel="Mostrar controles de reproducción"
+          />
         ) : null}
       </View>
 
@@ -971,6 +1083,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 16,
+  },
+  revealControlsButton: {
+    position: "absolute",
+    right: 48,
+    bottom: 36,
+    minWidth: 190,
+    minHeight: 50,
+    zIndex: 12,
   },
   actionBtn: {
     minWidth: 120,

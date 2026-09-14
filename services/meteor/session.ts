@@ -11,8 +11,8 @@ const CURRENT_USER_FIELDS = {
 export const hasMovieSubscription = (user: MeteorUser | null | undefined) =>
   user?.subscipcionPelis === true;
 
-export const destinationForUser = (user: MeteorUser | null | undefined) =>
-  hasMovieSubscription(user) ? "/(app)/home" : "/(app)/subscription";
+export const destinationForUser = (_user: MeteorUser | null | undefined): "/(app)/home" =>
+  "/(app)/home";
 
 export const useCurrentSession = () =>
   Meteor.useTracker(() => {

@@ -3,7 +3,7 @@ import { StyleSheet, Text, TextInput, View } from "react-native";
 import { TVFocusButton } from "./TVFocusButton";
 import { tvTokens } from "../theme";
 
-export type TVCatalogTab = "movies" | "series";
+export type TVCatalogTab = "movies" | "series" | "courses";
 
 export interface TVNavHeaderProps {
   activeTab: TVCatalogTab;
@@ -11,6 +11,7 @@ export interface TVNavHeaderProps {
   searchQuery: string;
   onSearchChange: (text: string) => void;
   onLogout: () => void;
+  hasMovieSubscription?: boolean;
   username?: string;
 }
 
@@ -20,6 +21,7 @@ export function TVNavHeader({
   searchQuery,
   onSearchChange,
   onLogout,
+  hasMovieSubscription = true,
   username,
 }: TVNavHeaderProps) {
   return (
@@ -27,26 +29,38 @@ export function TVNavHeader({
       {/* Marca e identidad */}
       <View style={styles.brandContainer}>
         <Text style={styles.brandLogo}>VIDKAR</Text>
-        <Text style={styles.brandKicker}>CINEMA TV</Text>
+        <Text style={styles.brandKicker}>{hasMovieSubscription ? "CINEMA TV" : "ACADEMIA TV"}</Text>
       </View>
 
       {/* Selector de pestañas: Películas / Series */}
       <View style={styles.tabsContainer}>
+        {hasMovieSubscription ? (
+          <>
+            <TVFocusButton
+              label="Películas"
+              icon="🎬"
+              active={activeTab === "movies"}
+              onPress={() => onSelectTab("movies")}
+              style={[styles.tabButton, activeTab === "movies" && styles.tabButtonActive]}
+              hasTVPreferredFocus={false}
+            />
+            <TVFocusButton
+              label="Series"
+              icon="📺"
+              active={activeTab === "series"}
+              onPress={() => onSelectTab("series")}
+              style={[styles.tabButton, activeTab === "series" && styles.tabButtonActive]}
+              hasTVPreferredFocus={false}
+            />
+          </>
+        ) : null}
         <TVFocusButton
-          label="Películas"
-          icon="🎬"
-          active={activeTab === "movies"}
-          onPress={() => onSelectTab("movies")}
-          style={[styles.tabButton, activeTab === "movies" && styles.tabButtonActive]}
-          hasTVPreferredFocus={false}
-        />
-        <TVFocusButton
-          label="Series"
-          icon="📺"
-          active={activeTab === "series"}
-          onPress={() => onSelectTab("series")}
-          style={[styles.tabButton, activeTab === "series" && styles.tabButtonActive]}
-          hasTVPreferredFocus={false}
+          label="Cursos"
+          icon="🎓"
+          active={activeTab === "courses"}
+          onPress={() => onSelectTab("courses")}
+          style={[styles.tabButton, styles.courseTabButton, activeTab === "courses" && styles.courseTabButtonActive]}
+          hasTVPreferredFocus={!hasMovieSubscription}
         />
       </View>
 
@@ -55,7 +69,7 @@ export function TVNavHeader({
         <TextInput
           value={searchQuery}
           onChangeText={onSearchChange}
-          placeholder="Buscar título, actor o género…"
+          placeholder={hasMovieSubscription ? "Buscar título, actor o género…" : "Buscar curso o profesor…"}
           placeholderTextColor="#64748b"
           style={styles.searchInput}
         />
@@ -122,6 +136,13 @@ const styles = StyleSheet.create({
   },
   tabButtonActive: {
     backgroundColor: "#e50914",
+  },
+  courseTabButton: {
+    borderColor: "rgba(45, 212, 191, 0.28)",
+  },
+  courseTabButtonActive: {
+    backgroundColor: "#0f766e",
+    borderColor: "#2dd4bf",
   },
   actionsContainer: {
     flexDirection: "row",

@@ -35,7 +35,8 @@ Tras descargar el AAB, súbelo manualmente a una pista dedicada de Google Play c
 ## Funcionalidad
 
 - Login compartido con Android/iOS mediante `@meteorrn/core`.
-- Catálogo `pelis` con gate `subscipcionPelis`, búsqueda, géneros y detalle.
+- Catálogo de cursos con búsqueda, categorías, suscripciones, detalle de lecciones y reproducción directa protegida.
+- Catálogo `pelis` y `series` con gate `subscipcionPelis`: solo se publican y renderizan cuando la suscripción está activa.
 - Reproducción VLC sobre HLS por sesión, polling, cancelación y reintento.
 - Controles grandes para reproducir/pausar, saltos de 10 segundos y ocultación de controles.
 - Avance por película en `SecureStore` y diálogo para continuar viendo.
@@ -54,3 +55,9 @@ La app conserva el contrato existente:
 - `GET /peliculas/hls/:idPeli/:sessionId/segment_*.ts`
 
 La autorización de usuario y suscripción sigue siendo responsabilidad de Meteor y del servidor HLS; ocultar controles en la interfaz no concede acceso.
+
+## Regla de contenido TV
+
+- Toda cuenta autenticada puede entrar a la experiencia de cursos.
+- Una cuenta sin `subscipcionPelis === true` ve únicamente cursos: no se suscribe a `pelis` ni `series`, no muestra sus pestañas y no puede abrir su reproductor mediante una ruta directa.
+- Una cuenta con la suscripción activa ve cursos, películas y series en el mismo shell D-pad.

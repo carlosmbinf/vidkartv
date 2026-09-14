@@ -6,6 +6,8 @@ export default function AppLayout() {
       <Stack.Screen name="home" />
       <Stack.Screen name="player" options={{ animation: "slide_from_right" }} />
       <Stack.Screen name="subscription" />
+      <Stack.Screen name="course" options={{ animation: "slide_from_right" }} />
+      <Stack.Screen name="course-player" options={{ animation: "fade" }} />
     </Stack>
   );
 }

@@ -1,6 +1,6 @@
 const fs = require("fs");
 const path = require("path");
-const { withAndroidManifest, withDangerousMod } = require("@expo/config-plugins");
+const { withAndroidManifest, withDangerousMod, withGradleProperties } = require("@expo/config-plugins");
 
 const addOrReplaceFeature = (features, name, required) => {
   const withoutFeature = features.filter((feature) => feature.$?.["android:name"] !== name);
@@ -53,6 +53,22 @@ module.exports = function withVidkarTv(config) {
     });
 
     return manifestConfig;
+  });
+
+  nextConfig = withGradleProperties(nextConfig, (gradleConfig) => {
+    const hasWorkletsPickFirst = gradleConfig.modResults.some(
+      (property) => property.type === "property" && property.key === "android.packagingOptions.pickFirsts" && property.value.includes("**/libworklets.so"),
+    );
+
+    if (!hasWorkletsPickFirst) {
+      gradleConfig.modResults.push({
+        type: "property",
+        key: "android.packagingOptions.pickFirsts",
+        value: "**/libworklets.so",
+      });
+    }
+
+    return gradleConfig;
   });
 
   nextConfig = withDangerousMod(nextConfig, ["android", async (dangerousConfig) => {

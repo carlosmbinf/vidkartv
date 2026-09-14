@@ -41,7 +41,7 @@ export default function EntryScreen() {
   return (
     <View style={styles.container}>
       <Text style={styles.logo}>VIDKAR</Text>
-      <Text style={styles.subtitle}>CINEMA · TV</Text>
+      <Text style={styles.subtitle}>EXPERIENCIA TV</Text>
       {connectionError ? <Text style={styles.error}>{connectionError}</Text> : <ActivityIndicator color="#e50914" size="large" />}
     </View>
   );
