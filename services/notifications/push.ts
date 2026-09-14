@@ -1,12 +1,27 @@
 import Constants from "expo-constants";
-import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
 import { Meteor } from "../meteor/client";
+import type * as NotificationsModule from "expo-notifications";
 
 const CHANNEL_ID = "vidkar-tv-general";
 const EXPO_TOKEN_PREFIXES = ["ExponentPushToken[", "ExpoPushToken["];
+type NotificationsApi = typeof NotificationsModule;
+type Notification = NotificationsModule.Notification;
 
-Notifications.setNotificationHandler({
+const getNotifications = (): NotificationsApi | null => {
+  // Expo Go SDK 53+ no longer includes remote notifications. Avoid importing the
+  // native module there because even the import itself emits a runtime warning.
+  if (Constants.appOwnership === "expo") return null;
+  try {
+    return require("expo-notifications") as NotificationsApi;
+  } catch {
+    return null;
+  }
+};
+
+const notifications = getNotifications();
+
+notifications?.setNotificationHandler({
   handleNotification: async () => ({
     shouldPlaySound: true,
     shouldSetBadge: true,
@@ -27,28 +42,29 @@ const isExpoToken = (token: unknown): token is string =>
   typeof token === "string" && EXPO_TOKEN_PREFIXES.some((prefix) => token.startsWith(prefix));
 
 const requestPermission = async () => {
-  const current = await Notifications.getPermissionsAsync();
+  if (!notifications) return false;
+  const current = await notifications.getPermissionsAsync();
   if (current.granted) return true;
-  const requested = await Notifications.requestPermissionsAsync();
+  const requested = await notifications.requestPermissionsAsync();
   return requested.granted;
 };
 
 export const registerPushTokenForActiveSession = async () => {
   const userId = Meteor.userId?.();
   const projectId = getProjectId();
-  if (!userId || !projectId || !(await requestPermission())) return null;
+  if (!notifications || !userId || !projectId || !(await requestPermission())) return null;
 
   if (Platform.OS === "android") {
-    await Notifications.setNotificationChannelAsync(CHANNEL_ID, {
+    await notifications.setNotificationChannelAsync(CHANNEL_ID, {
       name: "VIDKAR TV",
-      importance: Notifications.AndroidImportance.HIGH,
+      importance: notifications.AndroidImportance.HIGH,
       sound: "default",
       vibrationPattern: [0, 250, 250, 250],
-      lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+      lockscreenVisibility: notifications.AndroidNotificationVisibility.PUBLIC,
     });
   }
 
-  const tokenResponse = await Notifications.getExpoPushTokenAsync({ projectId });
+  const tokenResponse = await notifications.getExpoPushTokenAsync({ projectId });
   const token = tokenResponse?.data;
   if (!isExpoToken(token)) return null;
 
@@ -69,12 +85,13 @@ export const registerPushTokenForActiveSession = async () => {
 };
 
 export const setupPushListeners = (
-  onNotification?: (notification: Notifications.Notification) => void,
+  onNotification?: (notification: Notification) => void,
 ) => {
-  const received = Notifications.addNotificationReceivedListener((notification) => {
+  if (!notifications) return () => undefined;
+  const received = notifications.addNotificationReceivedListener((notification) => {
     onNotification?.(notification);
   });
-  const opened = Notifications.addNotificationResponseReceivedListener((response) => {
+  const opened = notifications.addNotificationResponseReceivedListener((response) => {
     onNotification?.(response.notification);
   });
 
